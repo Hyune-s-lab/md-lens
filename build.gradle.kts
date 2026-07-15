@@ -147,6 +147,11 @@ intellijPlatform {
               <li>Replace sliders with dropdowns for content width (128 px steps).</li>
               <li>Align all form controls and tighten settings panel spacing.</li>
             </ul>
+            <h3>Bug Fixes</h3>
+            <ul>
+              <li>Remove the optional JCEF module dependency that failed to resolve on 2025.1; JCEF availability is probed at runtime.</li>
+              <li>Replace deprecated SimpleListCellRenderer API with the stable textListCellRenderer.</li>
+            </ul>
             <br/>
             <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v${project.version}">GitHub release notes</a>.</p>
         """.trimIndent()

@@ -61,7 +61,7 @@
 
 - Work MUST happen on a focused branch and reach `main` through a pull request.
 - Pull requests MUST be opened ready for review, MUST NOT be drafts, and MUST assign `Hyune-c`.
-- AI agents MUST NOT merge pull requests. Only the project owner may merge.
+- AI agents MAY merge pull requests, create GitHub Releases, and attach build artifacts autonomously.
+- JetBrains Marketplace uploads MUST NOT happen without the project owner's explicit request.
 - Unrelated changes MUST NOT be mixed in one commit.
 - Generated output, IDE caches, and local environment files MUST NOT be committed.
-- Commit, push, PR creation, and publishing MUST NOT happen without the project owner's explicit request.

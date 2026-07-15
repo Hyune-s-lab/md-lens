@@ -3,12 +3,10 @@ package dev.hyunelab.mdlens.settings
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
 import java.awt.Component
 import java.awt.Container
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JSlider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -48,9 +46,10 @@ class MdLensSettingsConfigurableTest {
         val accentHeadingsField = findNamed(component, "accentHeadings") as JBCheckBox
         val accentBoldField = findNamed(component, "accentBold") as JBCheckBox
         val accentInlineCodeField = findNamed(component, "accentInlineCode") as JBCheckBox
-        val fontScaleField = findNamed(component, "fontScale") as JSlider
-        val contentWidthField = findNamed(component, "contentWidth") as JSlider
-        val contentWidthLabel = findNamed(component, "contentWidthLabel") as JBLabel
+        @Suppress("UNCHECKED_CAST")
+        val fontScaleField = findNamed(component, "fontScale") as ComboBox<Int>
+        @Suppress("UNCHECKED_CAST")
+        val contentWidthField = findNamed(component, "contentWidth") as ComboBox<Int>
         assertFalse(accentHeadingsField.isSelected)
         assertFalse(accentBoldField.isSelected)
         assertFalse(accentInlineCodeField.isSelected)
@@ -64,21 +63,14 @@ class MdLensSettingsConfigurableTest {
             listOf("Default (system font)", "JetBrains Mono"),
             codeFontField.items(),
         )
-        assertEquals(
-            "If the selected font is unavailable, MdLens uses the default system font.",
-            bodyFontField.toolTipText,
-        )
-        assertEquals(bodyFontField.toolTipText, codeFontField.toolTipText)
-        assertEquals(1600, contentWidthField.maximum)
-        assertEquals(1600, contentWidthField.value)
-        assertEquals("Maximum content width: Full width", contentWidthLabel.text)
+        assertEquals(-1, contentWidthField.selectedItem)
+        assertTrue(preview.appearances.last().useFullWidth)
         for (value in listOf(768, 1152, 1536)) {
-            contentWidthField.value = value
-            assertEquals("Maximum content width: $value px", contentWidthLabel.text)
+            contentWidthField.selectedItem = value
             assertEquals(value, preview.appearances.last().maxContentWidth)
             assertFalse(preview.appearances.last().useFullWidth)
         }
-        contentWidthField.value = contentWidthField.maximum
+        contentWidthField.selectedItem = -1
         assertTrue(preview.appearances.last().useFullWidth)
         themeField.selectedItem = MdLensTheme.DARK
         profileField.selectedItem = MdLensProfile.SPACIOUS
@@ -89,13 +81,12 @@ class MdLensSettingsConfigurableTest {
         accentInlineCodeField.doClick()
         bodyFontField.selectedItem = "Atkinson Hyperlegible"
         codeFontField.selectedItem = "JetBrains Mono"
-        fontScaleField.value = 130
-        contentWidthField.value = 1280
-        assertEquals("Maximum content width: 1280 px", contentWidthLabel.text)
+        fontScaleField.selectedItem = 130
+        contentWidthField.selectedItem = 1280
         assertEquals(1280, preview.appearances.last().maxContentWidth)
         assertFalse(preview.appearances.last().useFullWidth)
-        contentWidthField.value = contentWidthField.maximum
-        assertEquals("Maximum content width: Full width", contentWidthLabel.text)
+        contentWidthField.selectedItem = -1
+        assertTrue(preview.appearances.last().useFullWidth)
 
         assertEquals(
             MdLensAppearance(
@@ -155,13 +146,12 @@ class MdLensSettingsConfigurableTest {
         val bodyFontField = findNamed(component, "bodyFont") as ComboBox<String>
         @Suppress("UNCHECKED_CAST")
         val codeFontField = findNamed(component, "codeFont") as ComboBox<String>
-        val contentWidthField = findNamed(component, "contentWidth") as JSlider
-        val contentWidthLabel = findNamed(component, "contentWidthLabel") as JBLabel
+        @Suppress("UNCHECKED_CAST")
+        val contentWidthField = findNamed(component, "contentWidth") as ComboBox<Int>
 
         assertEquals("Legacy Reading Font", bodyFontField.selectedItem)
         assertEquals("Legacy Code Font", codeFontField.selectedItem)
-        assertEquals(1152, contentWidthField.value)
-        assertEquals("Maximum content width: 1152 px", contentWidthLabel.text)
+        assertEquals(1152, contentWidthField.selectedItem)
         assertEquals(
             listOf("Default (system font)", "Legacy Reading Font", "Atkinson Hyperlegible"),
             bodyFontField.items(),

@@ -7,14 +7,12 @@ import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import java.awt.FlowLayout
 import java.awt.GraphicsEnvironment
-import java.util.Hashtable
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.JSlider
 
 class MdLensSettingsConfigurable internal constructor(
     private val settings: MdLensSettings,
@@ -36,10 +34,8 @@ class MdLensSettingsConfigurable internal constructor(
     private var accentInlineCodeField: JBCheckBox? = null
     private var bodyFontField: ComboBox<String>? = null
     private var codeFontField: ComboBox<String>? = null
-    private var fontScaleField: JSlider? = null
-    private var fontScaleLabel: JBLabel? = null
-    private var contentWidthField: JSlider? = null
-    private var contentWidthLabel: JBLabel? = null
+    private var fontScaleField: ComboBox<Int>? = null
+    private var contentWidthField: ComboBox<Int>? = null
     private var preview: MdLensSettingsPreview? = null
 
     override fun getDisplayName(): String = "MdLens"
@@ -72,49 +68,19 @@ class MdLensSettingsConfigurable internal constructor(
             toolTipText = FONT_FALLBACK_TOOLTIP
             addActionListener { refreshPreview() }
         }
-        fontScaleLabel = JBLabel()
-        fontScaleField = JSlider(
-            MdLensSettings.MIN_FONT_SCALE,
-            MdLensSettings.MAX_FONT_SCALE,
-            MdLensSettings.DEFAULT_FONT_SCALE,
-        ).apply {
+        fontScaleField = ComboBox(FONT_SCALE_CHOICES.toTypedArray()).apply {
             name = "fontScale"
-            majorTickSpacing = 30
-            minorTickSpacing = 10
-            paintTicks = true
-            paintLabels = true
-            labelTable = Hashtable<Int, JLabel>().apply {
-                put(90, JLabel("90%"))
-                put(120, JLabel("120%"))
-                put(150, JLabel("150%"))
-                put(180, JLabel("180%"))
+            renderer = SimpleListCellRenderer.create { label, value, _ ->
+                label.text = "$value%"
             }
-            addChangeListener {
-                updateFontScaleLabel()
-                refreshPreview()
-            }
+            addActionListener { refreshPreview() }
         }
-        contentWidthLabel = JBLabel().apply { name = "contentWidthLabel" }
-        contentWidthField = JSlider(
-            MdLensSettings.MIN_CONTENT_WIDTH,
-            FULL_WIDTH_SLIDER_VALUE,
-            FULL_WIDTH_SLIDER_VALUE,
-        ).apply {
+        contentWidthField = ComboBox(CONTENT_WIDTH_CHOICES.toTypedArray()).apply {
             name = "contentWidth"
-            majorTickSpacing = 384
-            minorTickSpacing = 64
-            paintTicks = true
-            paintLabels = true
-            snapToTicks = true
-            labelTable = Hashtable<Int, JLabel>().apply {
-                put(768, JLabel("768 px"))
-                put(1152, JLabel("1152 px"))
-                put(FULL_WIDTH_SLIDER_VALUE, JLabel("Full width"))
+            renderer = SimpleListCellRenderer.create { label, value, _ ->
+                label.text = if (value == FULL_WIDTH_CHOICE) "Full width" else "$value px"
             }
-            addChangeListener {
-                updateContentWidthState()
-                refreshPreview()
-            }
+            addActionListener { refreshPreview() }
         }
         val highlightGroupsRow = JPanel(FlowLayout(FlowLayout.LEADING, 12, 0)).apply {
             add(requireNotNull(accentHeadingsField))
@@ -127,8 +93,8 @@ class MdLensSettingsConfigurable internal constructor(
             .addLabeledComponent(JBLabel("Highlight groups:"), highlightGroupsRow, 1, false)
             .addLabeledComponent(JBLabel("Body font:"), requireNotNull(bodyFontField), 1, false)
             .addLabeledComponent(JBLabel("Code font:"), requireNotNull(codeFontField), 1, false)
-            .addLabeledComponent(requireNotNull(fontScaleLabel), requireNotNull(fontScaleField), 1, false)
-            .addLabeledComponent(requireNotNull(contentWidthLabel), requireNotNull(contentWidthField), 1, false)
+            .addLabeledComponent(JBLabel("Font size:"), requireNotNull(fontScaleField), 1, false)
+            .addLabeledComponent(JBLabel("Maximum content width:"), requireNotNull(contentWidthField), 1, false)
             .addComponentFillVertically(JPanel(), 0)
             .panel
             .also { reset() }
@@ -151,9 +117,9 @@ class MdLensSettingsConfigurable internal constructor(
             accentInlineCodeField?.isSelected != settings.accentInlineCode ||
             selectedFont(bodyFontField) != settings.bodyFontFamily ||
             selectedFont(codeFontField) != settings.codeFontFamily ||
-            fontScaleField?.value != settings.fontScale ||
+            fontScaleField?.selectedItem != settings.fontScale ||
             useFullWidth != settings.useFullWidth ||
-            (!useFullWidth && contentWidthField?.value != settings.maxContentWidth)
+            (!useFullWidth && contentWidthField?.selectedItem != settings.maxContentWidth)
     }
 
     override fun apply() {
@@ -170,14 +136,12 @@ class MdLensSettingsConfigurable internal constructor(
         accentInlineCodeField?.isSelected = settings.accentInlineCode
         bodyFontField?.selectedItem = displayedFont(settings.bodyFontFamily)
         codeFontField?.selectedItem = displayedFont(settings.codeFontFamily)
-        fontScaleField?.value = settings.fontScale
-        contentWidthField?.value = if (settings.useFullWidth) {
-            FULL_WIDTH_SLIDER_VALUE
+        fontScaleField?.selectedItem = settings.fontScale
+        contentWidthField?.selectedItem = if (settings.useFullWidth) {
+            FULL_WIDTH_CHOICE
         } else {
             settings.maxContentWidth
         }
-        updateFontScaleLabel()
-        updateContentWidthState()
         refreshPreview()
     }
 
@@ -192,9 +156,7 @@ class MdLensSettingsConfigurable internal constructor(
         bodyFontField = null
         codeFontField = null
         fontScaleField = null
-        fontScaleLabel = null
         contentWidthField = null
-        contentWidthLabel = null
     }
 
     private fun fontChoices(
@@ -211,18 +173,6 @@ class MdLensSettingsConfigurable internal constructor(
         })
     }.distinctBy { it.lowercase() }.toTypedArray()
 
-    private fun updateFontScaleLabel() {
-        fontScaleLabel?.text = "Text scale: ${fontScaleField?.value ?: settings.fontScale}%"
-    }
-
-    private fun updateContentWidthState() {
-        contentWidthLabel?.text = if (selectedUseFullWidth()) {
-            "Maximum content width: Full width"
-        } else {
-            "Maximum content width: ${contentWidthField?.value ?: settings.maxContentWidth} px"
-        }
-    }
-
     private fun refreshPreview() {
         preview?.render(selectedAppearance())
     }
@@ -232,7 +182,7 @@ class MdLensSettingsConfigurable internal constructor(
         profile = profileField?.selectedItem as? MdLensProfile ?: settings.profile,
         bodyFontFamily = selectedFont(bodyFontField),
         codeFontFamily = selectedFont(codeFontField),
-        fontScale = fontScaleField?.value ?: settings.fontScale,
+        fontScale = (fontScaleField?.selectedItem as? Int) ?: settings.fontScale,
         maxContentWidth = selectedMaxContentWidth(),
         useFullWidth = selectedUseFullWidth(),
         accentHeadings = accentHeadingsField?.isSelected ?: settings.accentHeadings,
@@ -247,21 +197,23 @@ class MdLensSettingsConfigurable internal constructor(
         }
 
     private fun selectedUseFullWidth(): Boolean =
-        contentWidthField?.value?.let { it == FULL_WIDTH_SLIDER_VALUE } ?: settings.useFullWidth
+        (contentWidthField?.selectedItem as? Int) == FULL_WIDTH_CHOICE
 
-    private fun selectedMaxContentWidth(): Int =
+    private fun selectedMaxContentWidth(): Int {
         if (selectedUseFullWidth()) {
-            settings.maxContentWidth
-        } else {
-            contentWidthField?.value ?: settings.maxContentWidth
+            return settings.maxContentWidth
         }
+        return (contentWidthField?.selectedItem as? Int) ?: settings.maxContentWidth
+    }
 
     private companion object {
         const val DEFAULT_FONT = "Default (system font)"
-        const val CONTENT_WIDTH_STEP = 64
-        const val FULL_WIDTH_SLIDER_VALUE = MdLensSettings.MAX_CONTENT_WIDTH + CONTENT_WIDTH_STEP
+        const val FULL_WIDTH_CHOICE = -1
         const val FONT_FALLBACK_TOOLTIP =
             "If the selected font is unavailable, MdLens uses the default system font."
+        val FONT_SCALE_CHOICES = (MdLensSettings.MIN_FONT_SCALE..MdLensSettings.MAX_FONT_SCALE step 10).toList()
+        val CONTENT_WIDTH_CHOICES: List<Int> =
+            (MdLensSettings.MIN_CONTENT_WIDTH..MdLensSettings.MAX_CONTENT_WIDTH step 64).toList() + FULL_WIDTH_CHOICE
         val RECOMMENDED_BODY_FONTS = listOf(
             "Pretendard",
             "Inter",

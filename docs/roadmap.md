@@ -1,19 +1,19 @@
 # Roadmap
 
-## Earlier Releases
-
-MdLens was originally developed as MarkdownNeat. Releases 0.1.x through 0.4.x shipped under the previous plugin at <https://github.com/Hyune-s-lab/markdown-neat> (archived).
-
-- **0.1.x** — Markdown viewer with GitHub Flavored Markdown, themes, offline rendering, and JCEF fallback
-- **0.2.x** — Mermaid diagrams, bundled runtime with offline icons, and modular IDE compatibility
-- **0.3.x** — Reading profiles, font selection, text scaling, content width, and live preview
-- **0.4.x** — Syntax highlighting, highlight groups, editing handoff, and anchor navigation
-
 ## 0.4.1 — Compatibility Backport
 
 - Lower the IDE compatibility baseline from 2026.1 to 2025.1 so MdLens runs on IDEs from the past year
 - Verify JCEF loading on 2025.1 where JCEF is platform-internal, not a bundled plugin
 - Run Plugin Verifier against 2025.1, 2025.2, 2025.3, and 2026.1
+
+## Earlier Releases
+
+MdLens was originally developed as MarkdownNeat. Releases 0.1.x through 0.4.x shipped under the previous plugin at <https://github.com/Hyune-s-lab/markdown-neat> (archived).
+
+- **0.4.x** — Syntax highlighting, highlight groups, editing handoff, and anchor navigation
+- **0.3.x** — Reading profiles, font selection, text scaling, content width, and live preview
+- **0.2.x** — Mermaid diagrams, bundled runtime with offline icons, and modular IDE compatibility
+- **0.1.x** — Markdown viewer with GitHub Flavored Markdown, themes, offline rendering, and JCEF fallback
 
 ## Later
 

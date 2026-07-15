@@ -5,15 +5,14 @@ import { renderMarkdown } from "./render-markdown";
 describe("renderMarkdown", () => {
   it("renders GitHub-flavored task lists", () => {
     const result = renderMarkdown({
-      version: 4,
+      version: 5,
       source: "# Tasks\n\n- [x] Render Markdown",
       baseUrl: "file:///project/docs/guide.md",
       documentType: "markdown",
       theme: "light",
       profile: "compact",
-      bodyFontFamily: "",
-      codeFontFamily: "",
-      fontScale: 100,
+      fontFamily: "",
+      fontSize: 14,
       maxContentWidth: 1152,
     });
 
@@ -24,7 +23,7 @@ describe("renderMarkdown", () => {
 
   it("removes executable and interactive content", () => {
     const result = renderMarkdown({
-      version: 4,
+      version: 5,
       source: [
         '<script>alert("no")</script>',
         '<div style="position: fixed" onclick="alert(1)">content</div>',
@@ -35,9 +34,8 @@ describe("renderMarkdown", () => {
       documentType: "markdown",
       theme: "dark",
       profile: "compact",
-      bodyFontFamily: "",
-      codeFontFamily: "",
-      fontScale: 100,
+      fontFamily: "",
+      fontSize: 14,
       maxContentWidth: 1152,
     });
 
@@ -49,15 +47,14 @@ describe("renderMarkdown", () => {
 
   it("creates stable GitHub-style anchors for headings", () => {
     const result = renderMarkdown({
-      version: 4,
+      version: 5,
       source: "## Hello, MdLens!\n\n## Hello, MdLens!",
       baseUrl: "file:///project/readme.md",
       documentType: "markdown",
       theme: "light",
       profile: "compact",
-      bodyFontFamily: "",
-      codeFontFamily: "",
-      fontScale: 100,
+      fontFamily: "",
+      fontSize: 14,
       maxContentWidth: 1152,
     });
 

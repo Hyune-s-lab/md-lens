@@ -33,15 +33,14 @@ describe("viewer theme", () => {
       rendered: vi.fn(),
     });
     window.mdLens.render({
-      version: 4,
+      version: 5,
       source: "# Dark",
       baseUrl: "file:///README.md",
       documentType: "markdown",
       theme: "dark",
       profile: "compact",
-      bodyFontFamily: "",
-      codeFontFamily: "",
-      fontScale: 100,
+      fontFamily: "",
+      fontSize: 14,
     });
 
     await vi.advanceTimersByTimeAsync(75);
@@ -66,15 +65,14 @@ describe("viewer theme", () => {
       rendered: vi.fn(),
     });
     window.mdLens.render({
-      version: 4,
+      version: 5,
       source: "# Readable\n\n![Diagram](diagram.png)",
       baseUrl: "file:///README.md",
       documentType: "markdown",
       theme: "light",
       profile: "spacious",
-      bodyFontFamily: "Atkinson Hyperlegible",
-      codeFontFamily: "JetBrains Mono",
-      fontScale: 130,
+      fontFamily: "Atkinson Hyperlegible",
+      fontSize: 16,
       maxContentWidth: 1280,
     });
 
@@ -86,18 +84,18 @@ describe("viewer theme", () => {
     expect(document.documentElement.style.getPropertyValue("--md-lens-accent")).toBe(
       "#bc4c00",
     );
-    expect(viewer?.style.fontSize).toBe("20.8px");
+    expect(viewer?.style.fontSize).toBe("16px");
     expect(viewer?.style.lineHeight).toBe("1.75");
     expect(viewer?.style.maxWidth).toBe("1280px");
     expect(viewer?.style.fontFamily).toContain("Atkinson Hyperlegible");
     expect(viewer?.style.getPropertyValue("--md-lens-code-font")).toContain(
-      "JetBrains Mono",
+      "Atkinson Hyperlegible",
     );
     expect(image?.style.width).toBe("");
     expect(image?.style.transform).toBe("");
   });
 
-  it("clamps text scaling and clears custom fonts when defaults are restored", async () => {
+  it("clamps font size and clears custom fonts when defaults are restored", async () => {
     vi.resetModules();
     await import("./main");
 
@@ -109,42 +107,40 @@ describe("viewer theme", () => {
       rendered: vi.fn(),
     });
     window.mdLens.render({
-      version: 4,
+      version: 5,
       source: "Text",
       baseUrl: "file:///README.md",
       documentType: "markdown",
       theme: "dark",
       profile: "spacious",
-      bodyFontFamily: "Inter",
-      codeFontFamily: "JetBrains Mono",
-      fontScale: 500,
+      fontFamily: "Inter",
+      fontSize: 500,
       maxContentWidth: 9999,
     });
     await vi.advanceTimersByTimeAsync(75);
 
     const viewer = document.getElementById("viewer");
-    expect(viewer?.style.fontSize).toBe("28.8px");
+    expect(viewer?.style.fontSize).toBe("24px");
     expect(viewer?.style.maxWidth).toBe("1536px");
     expect(document.documentElement.style.getPropertyValue("--md-lens-accent")).toBe(
       "#f0883e",
     );
 
     window.mdLens.render({
-      version: 4,
+      version: 5,
       source: "Text",
       baseUrl: "file:///README.md",
       documentType: "markdown",
       theme: "light",
       profile: "compact",
-      bodyFontFamily: "",
-      codeFontFamily: "",
-      fontScale: 50,
+      fontFamily: "",
+      fontSize: 1,
       maxContentWidth: null,
     });
     await vi.advanceTimersByTimeAsync(75);
 
     expect(document.documentElement.dataset.profile).toBe("compact");
-    expect(viewer?.style.fontSize).toBe("14.4px");
+    expect(viewer?.style.fontSize).toBe("12px");
     expect(viewer?.style.maxWidth).toBe("none");
     expect(viewer?.style.lineHeight).toBe("1.5");
     expect(viewer?.style.fontFamily).toBe("");
@@ -166,15 +162,14 @@ describe("viewer theme", () => {
       rendered,
     });
     window.mdLens.render({
-      version: 4,
+      version: 5,
       source: "```mermaid\nflowchart LR\nA --> B\n```",
       baseUrl: "file:///README.md",
       documentType: "markdown",
       theme: "light",
       profile: "compact",
-      bodyFontFamily: "",
-      codeFontFamily: "",
-      fontScale: 150,
+      fontFamily: "",
+      fontSize: 14,
       maxContentWidth: 1152,
     });
 
@@ -192,7 +187,7 @@ describe("viewer theme", () => {
     await vi.runAllTimersAsync();
 
     const diagram = document.querySelector<HTMLElement>(".md-lens-diagram");
-    expect(document.getElementById("viewer")?.style.fontSize).toBe("24px");
+    expect(document.getElementById("viewer")?.style.fontSize).toBe("14px");
     expect(diagram?.textContent).toContain("Diagram");
     expect(getComputedStyle(diagram!).fontSize).toBe("16px");
     expect(getComputedStyle(diagram!).lineHeight).toBe("1.5");

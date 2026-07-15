@@ -32,9 +32,8 @@ enum class MdLensProfile(
 data class MdLensAppearance(
     val theme: MdLensTheme,
     val profile: MdLensProfile,
-    val bodyFontFamily: String,
-    val codeFontFamily: String,
-    val fontScale: Int,
+    val fontFamily: String,
+    val fontSize: Int,
     val maxContentWidth: Int,
     val useFullWidth: Boolean,
     val accentHeadings: Boolean = false,
@@ -52,15 +51,13 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
         var theme: MdLensTheme = MdLensTheme.LIGHT,
         @OptionTag(converter = MdLensProfileConverter::class)
         var profile: MdLensProfile = MdLensProfile.COMPACT,
-        var bodyFontFamily: String = "",
-        var codeFontFamily: String = "",
-        var fontScale: Int = DEFAULT_FONT_SCALE,
+        var fontFamily: String = "",
+        var fontSize: Int = DEFAULT_FONT_SIZE,
         var maxContentWidth: Int = DEFAULT_CONTENT_WIDTH,
         var useFullWidth: Boolean = true,
         var accentHeadings: Boolean = false,
         var accentBold: Boolean = false,
         var accentInlineCode: Boolean = false,
-        // Distinguishes pre-0.4 settings files, whose heading accent was implied by the profile.
         var accentsInitialized: Boolean = false,
     )
 
@@ -72,14 +69,11 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
     val profile: MdLensProfile
         get() = settingsState.profile
 
-    val bodyFontFamily: String
-        get() = settingsState.bodyFontFamily
+    val fontFamily: String
+        get() = settingsState.fontFamily
 
-    val codeFontFamily: String
-        get() = settingsState.codeFontFamily
-
-    val fontScale: Int
-        get() = settingsState.fontScale
+    val fontSize: Int
+        get() = settingsState.fontSize
 
     val maxContentWidth: Int
         get() = settingsState.maxContentWidth
@@ -100,9 +94,8 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
         get() = MdLensAppearance(
             theme,
             profile,
-            bodyFontFamily,
-            codeFontFamily,
-            fontScale,
+            fontFamily,
+            fontSize,
             maxContentWidth,
             useFullWidth,
             accentHeadings,
@@ -113,9 +106,8 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
     fun updateAppearance(appearance: MdLensAppearance): Boolean = updateAppearance(
         theme = appearance.theme,
         profile = appearance.profile,
-        bodyFontFamily = appearance.bodyFontFamily,
-        codeFontFamily = appearance.codeFontFamily,
-        fontScale = appearance.fontScale,
+        fontFamily = appearance.fontFamily,
+        fontSize = appearance.fontSize,
         maxContentWidth = appearance.maxContentWidth,
         useFullWidth = appearance.useFullWidth,
         accentHeadings = appearance.accentHeadings,
@@ -126,9 +118,8 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
     fun updateAppearance(
         theme: MdLensTheme,
         profile: MdLensProfile,
-        bodyFontFamily: String,
-        codeFontFamily: String,
-        fontScale: Int,
+        fontFamily: String,
+        fontSize: Int,
         maxContentWidth: Int,
         useFullWidth: Boolean,
         accentHeadings: Boolean = false,
@@ -139,9 +130,8 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
             SettingsState(
                 theme,
                 profile,
-                bodyFontFamily,
-                codeFontFamily,
-                fontScale,
+                fontFamily,
+                fontSize,
                 maxContentWidth,
                 useFullWidth,
                 accentHeadings,
@@ -164,9 +154,9 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
     }
 
     companion object {
-        const val MIN_FONT_SCALE = 90
-        const val MAX_FONT_SCALE = 180
-        const val DEFAULT_FONT_SCALE = 100
+        const val MIN_FONT_SIZE = 12
+        const val MAX_FONT_SIZE = 24
+        const val DEFAULT_FONT_SIZE = 14
         const val MIN_CONTENT_WIDTH = 768
         const val MAX_CONTENT_WIDTH = 1536
         const val DEFAULT_CONTENT_WIDTH = 1152
@@ -175,9 +165,8 @@ class MdLensSettings : PersistentStateComponent<MdLensSettings.SettingsState> {
             ApplicationManager.getApplication().getService(MdLensSettings::class.java)
 
         private fun normalizedState(state: SettingsState): SettingsState = state.copy(
-            bodyFontFamily = state.bodyFontFamily.trim(),
-            codeFontFamily = state.codeFontFamily.trim(),
-            fontScale = state.fontScale.coerceIn(MIN_FONT_SCALE, MAX_FONT_SCALE),
+            fontFamily = state.fontFamily.trim(),
+            fontSize = state.fontSize.coerceIn(MIN_FONT_SIZE, MAX_FONT_SIZE),
             maxContentWidth = state.maxContentWidth.coerceIn(MIN_CONTENT_WIDTH, MAX_CONTENT_WIDTH),
             accentHeadings = if (state.accentsInitialized) {
                 state.accentHeadings

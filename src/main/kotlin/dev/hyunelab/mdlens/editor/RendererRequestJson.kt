@@ -8,4 +8,4 @@ internal fun rendererRequestJson(
     documentType: String,
     settings: MdLensSettings,
 ): String =
-    """{"version":4,"source":${source.toJsonString()},"baseUrl":${baseUrl.toJsonString()},"documentType":"$documentType","theme":"${settings.theme.wireValue}","profile":"${settings.profile.wireValue}","bodyFontFamily":${settings.bodyFontFamily.toJsonString()},"codeFontFamily":${settings.codeFontFamily.toJsonString()},"fontScale":${settings.fontScale},"maxContentWidth":${if (settings.useFullWidth) "null" else settings.maxContentWidth},"accentHeadings":${settings.accentHeadings},"accentBold":${settings.accentBold},"accentInlineCode":${settings.accentInlineCode}}"""
+    """{"version":5,"source":${source.toJsonString()},"baseUrl":${baseUrl.toJsonString()},"documentType":"$documentType","theme":"${settings.theme.wireValue}","profile":"${settings.profile.wireValue}","fontFamily":${settings.fontFamily.toJsonString()},"fontSize":${settings.fontSize},"maxContentWidth":${if (settings.useFullWidth) "null" else settings.maxContentWidth},"accentHeadings":${settings.accentHeadings},"accentBold":${settings.accentBold},"accentInlineCode":${settings.accentInlineCode}}"""

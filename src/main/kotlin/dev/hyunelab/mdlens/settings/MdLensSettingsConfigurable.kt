@@ -3,16 +3,21 @@ package dev.hyunelab.mdlens.settings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.options.Configurable
-import com.intellij.ui.JBSplitter
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.util.ui.FormBuilder
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBTextField
+import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.awt.GraphicsEnvironment
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import java.awt.Insets
+import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 
 class MdLensSettingsConfigurable internal constructor(
     private val settings: MdLensSettings,
@@ -32,9 +37,8 @@ class MdLensSettingsConfigurable internal constructor(
     private var accentHeadingsField: JBCheckBox? = null
     private var accentBoldField: JBCheckBox? = null
     private var accentInlineCodeField: JBCheckBox? = null
-    private var bodyFontField: ComboBox<String>? = null
-    private var codeFontField: ComboBox<String>? = null
-    private var fontScaleField: ComboBox<Int>? = null
+    private var fontField: ComboBox<String>? = null
+    private var fontSizeField: JBTextField? = null
     private var contentWidthField: ComboBox<Int>? = null
     private var preview: MdLensSettingsPreview? = null
 
@@ -54,26 +58,21 @@ class MdLensSettingsConfigurable internal constructor(
         accentInlineCodeField = accentCheckBox("accentInlineCode", "Inline code")
 
         val installedFonts = availableFontFamilies()
-        bodyFontField = ComboBox(
-            fontChoices(installedFonts, RECOMMENDED_BODY_FONTS, settings.bodyFontFamily),
+        fontField = ComboBox(
+            fontChoices(installedFonts, RECOMMENDED_FONTS, settings.fontFamily),
         ).apply {
-            name = "bodyFont"
+            name = "font"
             toolTipText = FONT_FALLBACK_TOOLTIP
             addActionListener { refreshPreview() }
         }
-        codeFontField = ComboBox(
-            fontChoices(installedFonts, RECOMMENDED_CODE_FONTS, settings.codeFontFamily),
-        ).apply {
-            name = "codeFont"
-            toolTipText = FONT_FALLBACK_TOOLTIP
-            addActionListener { refreshPreview() }
-        }
-        fontScaleField = ComboBox(FONT_SCALE_CHOICES.toTypedArray()).apply {
-            name = "fontScale"
-            renderer = SimpleListCellRenderer.create { label, value, _ ->
-                label.text = "$value%"
-            }
-            addActionListener { refreshPreview() }
+        fontSizeField = JBTextField(settings.fontSize.toString()).apply {
+            name = "fontSize"
+            columns = 4
+            document.addDocumentListener(object : DocumentListener {
+                override fun insertUpdate(e: DocumentEvent) = refreshPreview()
+                override fun removeUpdate(e: DocumentEvent) = refreshPreview()
+                override fun changedUpdate(e: DocumentEvent) = refreshPreview()
+            })
         }
         contentWidthField = ComboBox(CONTENT_WIDTH_CHOICES.toTypedArray()).apply {
             name = "contentWidth"
@@ -82,29 +81,67 @@ class MdLensSettingsConfigurable internal constructor(
             }
             addActionListener { refreshPreview() }
         }
-        val highlightGroupsRow = JPanel(FlowLayout(FlowLayout.LEADING, 12, 0)).apply {
+        // FlowLayout applies hgap before the first component too, which breaks the
+        // column alignment against plain fields; keep hgap at 0 and use struts instead.
+        val highlightGroupsRow = JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
             add(requireNotNull(accentHeadingsField))
+            add(Box.createHorizontalStrut(12))
             add(requireNotNull(accentBoldField))
+            add(Box.createHorizontalStrut(12))
             add(requireNotNull(accentInlineCodeField))
         }
-        val form = FormBuilder.createFormBuilder()
-            .addLabeledComponent(JBLabel("Theme:"), requireNotNull(themeField), 1, false)
-            .addLabeledComponent(JBLabel("Density:"), requireNotNull(profileField), 1, false)
-            .addLabeledComponent(JBLabel("Highlight groups:"), highlightGroupsRow, 1, false)
-            .addLabeledComponent(JBLabel("Body font:"), requireNotNull(bodyFontField), 1, false)
-            .addLabeledComponent(JBLabel("Code font:"), requireNotNull(codeFontField), 1, false)
-            .addLabeledComponent(JBLabel("Font size:"), requireNotNull(fontScaleField), 1, false)
-            .addLabeledComponent(JBLabel("Maximum content width:"), requireNotNull(contentWidthField), 1, false)
-            .addComponentFillVertically(JPanel(), 0)
-            .panel
-            .also { reset() }
+        val fontRow = JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
+            add(requireNotNull(fontField))
+            add(Box.createHorizontalStrut(8))
+            add(JBLabel("Size:"))
+            add(Box.createHorizontalStrut(4))
+            add(requireNotNull(fontSizeField))
+            add(Box.createHorizontalStrut(4))
+            add(JBLabel("px"))
+        }
+        val form = JPanel(GridBagLayout())
+        val labelConstraints = GridBagConstraints().apply {
+            gridx = 0
+            anchor = GridBagConstraints.LINE_START
+            insets = Insets(0, 0, 4, 8)
+        }
+        val fieldConstraints = GridBagConstraints().apply {
+            gridx = 1
+            anchor = GridBagConstraints.LINE_START
+            weightx = 0.0
+            fill = GridBagConstraints.NONE
+            insets = Insets(0, 0, 4, 0)
+        }
+        val rows = listOf(
+            JBLabel("Theme:") to requireNotNull(themeField),
+            JBLabel("Density:") to requireNotNull(profileField),
+            JBLabel("Highlight:") to highlightGroupsRow,
+            JBLabel("Font:") to fontRow,
+            JBLabel("Content width:") to requireNotNull(contentWidthField),
+        )
+        for ((index, pair) in rows.withIndex()) {
+            val (label, component) = pair
+            labelConstraints.gridy = index
+            fieldConstraints.gridy = index
+            form.add(label, labelConstraints)
+            form.add(component, fieldConstraints)
+        }
+        val fillerConstraints = GridBagConstraints().apply {
+            gridx = 2
+            gridy = 0
+            gridheight = GridBagConstraints.REMAINDER
+            weightx = 1.0
+            fill = GridBagConstraints.BOTH
+        }
+        form.add(JPanel(), fillerConstraints)
+        form.also { reset() }
 
         preview = previewFactory()
         val currentPreview = preview ?: return form
         refreshPreview()
-        return JBSplitter(true, 0.38f).apply {
-            firstComponent = JBScrollPane(form).apply { border = null }
-            secondComponent = currentPreview.component
+        return JPanel(BorderLayout(0, 12)).apply {
+            add(form, BorderLayout.NORTH)
+            add(currentPreview.component, BorderLayout.CENTER)
         }
     }
 
@@ -115,9 +152,8 @@ class MdLensSettingsConfigurable internal constructor(
             accentHeadingsField?.isSelected != settings.accentHeadings ||
             accentBoldField?.isSelected != settings.accentBold ||
             accentInlineCodeField?.isSelected != settings.accentInlineCode ||
-            selectedFont(bodyFontField) != settings.bodyFontFamily ||
-            selectedFont(codeFontField) != settings.codeFontFamily ||
-            fontScaleField?.selectedItem != settings.fontScale ||
+            selectedFont(fontField) != settings.fontFamily ||
+            selectedFontSize() != settings.fontSize ||
             useFullWidth != settings.useFullWidth ||
             (!useFullWidth && contentWidthField?.selectedItem != settings.maxContentWidth)
     }
@@ -134,9 +170,8 @@ class MdLensSettingsConfigurable internal constructor(
         accentHeadingsField?.isSelected = settings.accentHeadings
         accentBoldField?.isSelected = settings.accentBold
         accentInlineCodeField?.isSelected = settings.accentInlineCode
-        bodyFontField?.selectedItem = displayedFont(settings.bodyFontFamily)
-        codeFontField?.selectedItem = displayedFont(settings.codeFontFamily)
-        fontScaleField?.selectedItem = settings.fontScale
+        fontField?.selectedItem = displayedFont(settings.fontFamily)
+        fontSizeField?.text = settings.fontSize.toString()
         contentWidthField?.selectedItem = if (settings.useFullWidth) {
             FULL_WIDTH_CHOICE
         } else {
@@ -153,9 +188,8 @@ class MdLensSettingsConfigurable internal constructor(
         accentHeadingsField = null
         accentBoldField = null
         accentInlineCodeField = null
-        bodyFontField = null
-        codeFontField = null
-        fontScaleField = null
+        fontField = null
+        fontSizeField = null
         contentWidthField = null
     }
 
@@ -180,9 +214,8 @@ class MdLensSettingsConfigurable internal constructor(
     private fun selectedAppearance(): MdLensAppearance = MdLensAppearance(
         theme = themeField?.selectedItem as? MdLensTheme ?: settings.theme,
         profile = profileField?.selectedItem as? MdLensProfile ?: settings.profile,
-        bodyFontFamily = selectedFont(bodyFontField),
-        codeFontFamily = selectedFont(codeFontField),
-        fontScale = (fontScaleField?.selectedItem as? Int) ?: settings.fontScale,
+        fontFamily = selectedFont(fontField),
+        fontSize = selectedFontSize(),
         maxContentWidth = selectedMaxContentWidth(),
         useFullWidth = selectedUseFullWidth(),
         accentHeadings = accentHeadingsField?.isSelected ?: settings.accentHeadings,
@@ -195,6 +228,13 @@ class MdLensSettingsConfigurable internal constructor(
             name = fieldName
             addActionListener { refreshPreview() }
         }
+
+    private fun selectedFontSize(): Int {
+        return fontSizeField?.text?.trim()?.toIntOrNull()?.coerceIn(
+            MdLensSettings.MIN_FONT_SIZE,
+            MdLensSettings.MAX_FONT_SIZE,
+        ) ?: settings.fontSize
+    }
 
     private fun selectedUseFullWidth(): Boolean =
         (contentWidthField?.selectedItem as? Int) == FULL_WIDTH_CHOICE
@@ -211,22 +251,15 @@ class MdLensSettingsConfigurable internal constructor(
         const val FULL_WIDTH_CHOICE = -1
         const val FONT_FALLBACK_TOOLTIP =
             "If the selected font is unavailable, MdLens uses the default system font."
-        val FONT_SCALE_CHOICES = (MdLensSettings.MIN_FONT_SCALE..MdLensSettings.MAX_FONT_SCALE step 10).toList()
         val CONTENT_WIDTH_CHOICES: List<Int> =
-            (MdLensSettings.MIN_CONTENT_WIDTH..MdLensSettings.MAX_CONTENT_WIDTH step 64).toList() + FULL_WIDTH_CHOICE
-        val RECOMMENDED_BODY_FONTS = listOf(
+            (MdLensSettings.MIN_CONTENT_WIDTH..MdLensSettings.MAX_CONTENT_WIDTH step 128).toList() + FULL_WIDTH_CHOICE
+        val RECOMMENDED_FONTS = listOf(
             "Pretendard",
             "Inter",
             "Atkinson Hyperlegible",
-            "Noto Serif",
-            "D2Coding",
-        )
-        val RECOMMENDED_CODE_FONTS = listOf(
             "JetBrains Mono",
             "D2Coding",
-            "Fira Code",
-            "Cascadia Code",
-            "Menlo",
+            "Noto Serif",
         )
 
         fun displayedFont(fontFamily: String): String = fontFamily.ifEmpty { DEFAULT_FONT }

@@ -2,12 +2,9 @@
 
 ## 0.4.2 — Settings Redesign and Verifier Cleanup
 
-- Merge body and code font into a single font field (bridge version 5)
-- Replace text scale percentage with font size in pixels (default 14)
-- Replace sliders with dropdowns for content width (128 px steps)
-- Align all form controls and tighten settings panel spacing
-- Remove optional JCEF module dependency that failed to resolve on 2025.1
-- Replace deprecated SimpleListCellRenderer with stable textListCellRenderer
+- Merge body and code font into a single font field with pixel-based font size
+- Replace sliders with dropdowns and align all form controls
+- Remove optional JCEF module dependency and replace deprecated renderer API
 
 ## 0.4.1 — Compatibility Backport
 

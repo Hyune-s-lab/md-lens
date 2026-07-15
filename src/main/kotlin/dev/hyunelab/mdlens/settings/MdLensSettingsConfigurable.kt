@@ -3,10 +3,10 @@ package dev.hyunelab.mdlens.settings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.options.Configurable
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.awt.GraphicsEnvironment
@@ -76,8 +76,8 @@ class MdLensSettingsConfigurable internal constructor(
         }
         contentWidthField = ComboBox(CONTENT_WIDTH_CHOICES.toTypedArray()).apply {
             name = "contentWidth"
-            renderer = SimpleListCellRenderer.create { label, value, _ ->
-                label.text = if (value == FULL_WIDTH_CHOICE) "Full width" else "$value px"
+            renderer = textListCellRenderer { value ->
+                if (value == FULL_WIDTH_CHOICE) "Full width" else "$value px"
             }
             addActionListener { refreshPreview() }
         }

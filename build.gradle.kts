@@ -143,6 +143,10 @@ intellijPlatform {
             <ul>
               <li>Lower the IDE compatibility baseline from 2026.1 to 2025.1 so MdLens runs on IDEs from the past year.</li>
             </ul>
+            <h3>Improvements</h3>
+            <ul>
+              <li>Replace text scale and content width sliders with dropdowns for simpler, more predictable selection.</li>
+            </ul>
             <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v${project.version}">GitHub release notes</a>.</p>
         """.trimIndent()
 

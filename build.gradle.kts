@@ -139,13 +139,13 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>Compatibility</h3>
+            <h3>New Features</h3>
             <ul>
               <li>Lower the IDE compatibility baseline from 2026.1 to 2025.1 so MdLens runs on IDEs from the past year.</li>
-            </ul>
-            <h3>Improvements</h3>
-            <ul>
-              <li>Replace text scale and content width sliders with dropdowns for simpler, more predictable selection.</li>
+              <li>Merge body and code font into a single font field for simpler configuration.</li>
+              <li>Replace text scale percentage with font size in pixels (default 14).</li>
+              <li>Replace sliders with dropdowns for content width (128 px steps).</li>
+              <li>Align all form controls and tighten settings panel spacing.</li>
             </ul>
             <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v${project.version}">GitHub release notes</a>.</p>
         """.trimIndent()

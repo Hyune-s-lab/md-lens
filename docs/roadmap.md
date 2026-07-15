@@ -9,6 +9,12 @@ MdLens was originally developed as MarkdownNeat. Releases 0.1.x through 0.4.x sh
 - **0.3.x** — Reading profiles, font selection, text scaling, content width, and live preview
 - **0.4.x** — Syntax highlighting, highlight groups, editing handoff, and anchor navigation
 
+## 0.4.1 — Compatibility Backport
+
+- Lower the IDE compatibility baseline from 2026.1 to 2025.1 so MdLens runs on IDEs from the past year
+- Verify JCEF loading on 2025.1 where JCEF is platform-internal, not a bundled plugin
+- Run Plugin Verifier against 2025.1, 2025.2, 2025.3, and 2026.1
+
 ## Later
 
 - Let each highlight group's color be customized individually.

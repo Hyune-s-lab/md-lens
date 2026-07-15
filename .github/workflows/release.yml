@@ -29,10 +29,10 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: test "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = true
 
-      - name: Check out release
+      - name: Check out main
         uses: actions/checkout@v7
         with:
-          ref: ${{ steps.release.outputs.tag }}
+          ref: main
 
       - name: Resolve release artifact
         id: artifact

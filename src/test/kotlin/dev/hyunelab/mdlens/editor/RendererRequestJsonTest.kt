@@ -13,9 +13,8 @@ class RendererRequestJsonTest {
             updateAppearance(
                 theme = MdLensTheme.DARK,
                 profile = MdLensProfile.SPACIOUS,
-                bodyFontFamily = "Font \"One\"",
-                codeFontFamily = "Mono\\Code",
-                fontScale = 130,
+                fontFamily = "Font \"One\"",
+                fontSize = 16,
                 maxContentWidth = 1280,
                 useFullWidth = true,
                 accentHeadings = true,
@@ -30,13 +29,13 @@ class RendererRequestJsonTest {
         )
 
         assertEquals(
-            """{"version":4,"source":"# Read\n","baseUrl":"file:///README.md","documentType":"markdown","theme":"dark","profile":"spacious","bodyFontFamily":"Font \"One\"","codeFontFamily":"Mono\\Code","fontScale":130,"maxContentWidth":null,"accentHeadings":true,"accentBold":false,"accentInlineCode":false}""",
+            """{"version":5,"source":"# Read\n","baseUrl":"file:///README.md","documentType":"markdown","theme":"dark","profile":"spacious","fontFamily":"Font \"One\"","fontSize":16,"maxContentWidth":null,"accentHeadings":true,"accentBold":false,"accentInlineCode":false}""",
             request,
         )
 
         settings.updateAppearance(settings.appearance.copy(useFullWidth = false, accentInlineCode = true))
         assertEquals(
-            """{"version":4,"source":"# Read\n","baseUrl":"file:///README.md","documentType":"markdown","theme":"dark","profile":"spacious","bodyFontFamily":"Font \"One\"","codeFontFamily":"Mono\\Code","fontScale":130,"maxContentWidth":1280,"accentHeadings":true,"accentBold":false,"accentInlineCode":true}""",
+            """{"version":5,"source":"# Read\n","baseUrl":"file:///README.md","documentType":"markdown","theme":"dark","profile":"spacious","fontFamily":"Font \"One\"","fontSize":16,"maxContentWidth":1280,"accentHeadings":true,"accentBold":false,"accentInlineCode":true}""",
             rendererRequestJson(
                 source = "# Read\n",
                 baseUrl = "file:///README.md",

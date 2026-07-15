@@ -37,9 +37,8 @@ class MdLensSettingsTest {
         assertEquals("GitHub Light", MdLensTheme.LIGHT.toString())
         assertEquals("GitHub Dark", MdLensTheme.DARK.toString())
         assertEquals(MdLensProfile.COMPACT, settings.profile)
-        assertEquals("", settings.bodyFontFamily)
-        assertEquals("", settings.codeFontFamily)
-        assertEquals(100, settings.fontScale)
+        assertEquals("", settings.fontFamily)
+        assertEquals(14, settings.fontSize)
         assertEquals(1152, settings.maxContentWidth)
         assertTrue(settings.useFullWidth)
         assertFalse(settings.accentHeadings)
@@ -49,9 +48,8 @@ class MdLensSettingsTest {
             settings.updateAppearance(
                 theme = MdLensTheme.DARK,
                 profile = MdLensProfile.SPACIOUS,
-                bodyFontFamily = "Atkinson Hyperlegible",
-                codeFontFamily = "JetBrains Mono",
-                fontScale = 130,
+                fontFamily = "Atkinson Hyperlegible",
+                fontSize = 16,
                 maxContentWidth = 1280,
                 useFullWidth = true,
             ),
@@ -59,18 +57,16 @@ class MdLensSettingsTest {
         assertFalse(settings.accentHeadings)
         assertEquals(MdLensTheme.DARK, settings.theme)
         assertEquals(MdLensProfile.SPACIOUS, settings.profile)
-        assertEquals("Atkinson Hyperlegible", settings.bodyFontFamily)
-        assertEquals("JetBrains Mono", settings.codeFontFamily)
-        assertEquals(130, settings.fontScale)
+        assertEquals("Atkinson Hyperlegible", settings.fontFamily)
+        assertEquals(16, settings.fontSize)
         assertEquals(1280, settings.maxContentWidth)
         assertTrue(settings.useFullWidth)
         assertFalse(
             settings.updateAppearance(
                 theme = MdLensTheme.DARK,
                 profile = MdLensProfile.SPACIOUS,
-                bodyFontFamily = "Atkinson Hyperlegible",
-                codeFontFamily = "JetBrains Mono",
-                fontScale = 130,
+                fontFamily = "Atkinson Hyperlegible",
+                fontSize = 16,
                 maxContentWidth = 1280,
                 useFullWidth = true,
             ),
@@ -85,9 +81,8 @@ class MdLensSettingsTest {
             MdLensSettings.SettingsState(
                 theme = MdLensTheme.DARK,
                 profile = MdLensProfile.SPACIOUS,
-                bodyFontFamily = "  Inter  ",
-                codeFontFamily = "  JetBrains Mono  ",
-                fontScale = 500,
+                fontFamily = "  Inter  ",
+                fontSize = 500,
                 maxContentWidth = 5000,
                 useFullWidth = false,
             ),
@@ -95,9 +90,8 @@ class MdLensSettingsTest {
 
         assertEquals(MdLensTheme.DARK, settings.theme)
         assertEquals(MdLensProfile.SPACIOUS, settings.profile)
-        assertEquals("Inter", settings.bodyFontFamily)
-        assertEquals("JetBrains Mono", settings.codeFontFamily)
-        assertEquals(180, settings.fontScale)
+        assertEquals("Inter", settings.fontFamily)
+        assertEquals(24, settings.fontSize)
         assertEquals(1536, settings.maxContentWidth)
         assertFalse(settings.useFullWidth)
     }

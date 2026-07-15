@@ -1,8 +1,9 @@
 package dev.hyunelab.mdlens.settings
 
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
+import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import javax.swing.JComponent
@@ -28,10 +29,8 @@ class MdLensSettingsConfigurableTest {
             previewFactory = { preview },
         )
         val component = configurable.createComponent()
-        val splitter = component as JBSplitter
-        assertTrue(splitter.isVertical)
-        assertEquals(0.38f, splitter.proportion, 0.001f)
-        assertTrue(contains(splitter.secondComponent, preview.component))
+        val layout = (component as JPanel).layout as BorderLayout
+        assertEquals(preview.component, layout.getLayoutComponent(BorderLayout.CENTER))
         assertTrue(contains(component, preview.component))
         assertEquals(MdLensProfile.COMPACT, preview.appearances.last().profile)
         assertTrue(preview.appearances.last().useFullWidth)
@@ -40,28 +39,20 @@ class MdLensSettingsConfigurableTest {
         @Suppress("UNCHECKED_CAST")
         val profileField = findNamed(component, "profile") as ComboBox<MdLensProfile>
         @Suppress("UNCHECKED_CAST")
-        val bodyFontField = findNamed(component, "bodyFont") as ComboBox<String>
-        @Suppress("UNCHECKED_CAST")
-        val codeFontField = findNamed(component, "codeFont") as ComboBox<String>
+        val fontField = findNamed(component, "font") as ComboBox<String>
         val accentHeadingsField = findNamed(component, "accentHeadings") as JBCheckBox
         val accentBoldField = findNamed(component, "accentBold") as JBCheckBox
         val accentInlineCodeField = findNamed(component, "accentInlineCode") as JBCheckBox
-        @Suppress("UNCHECKED_CAST")
-        val fontScaleField = findNamed(component, "fontScale") as ComboBox<Int>
+        val fontSizeField = findNamed(component, "fontSize") as JBTextField
         @Suppress("UNCHECKED_CAST")
         val contentWidthField = findNamed(component, "contentWidth") as ComboBox<Int>
         assertFalse(accentHeadingsField.isSelected)
         assertFalse(accentBoldField.isSelected)
         assertFalse(accentInlineCodeField.isSelected)
-        assertEquals("Default (system font)", bodyFontField.getItemAt(0))
-        assertEquals("Default (system font)", codeFontField.getItemAt(0))
+        assertEquals("Default (system font)", fontField.getItemAt(0))
         assertEquals(
-            listOf("Default (system font)", "Atkinson Hyperlegible"),
-            bodyFontField.items(),
-        )
-        assertEquals(
-            listOf("Default (system font)", "JetBrains Mono"),
-            codeFontField.items(),
+            listOf("Default (system font)", "Atkinson Hyperlegible", "JetBrains Mono"),
+            fontField.items(),
         )
         assertEquals(-1, contentWidthField.selectedItem)
         assertTrue(preview.appearances.last().useFullWidth)
@@ -79,9 +70,8 @@ class MdLensSettingsConfigurableTest {
         assertFalse(accentInlineCodeField.isSelected)
         accentHeadingsField.doClick()
         accentInlineCodeField.doClick()
-        bodyFontField.selectedItem = "Atkinson Hyperlegible"
-        codeFontField.selectedItem = "JetBrains Mono"
-        fontScaleField.selectedItem = 130
+        fontField.selectedItem = "Atkinson Hyperlegible"
+        fontSizeField.text = "16"
         contentWidthField.selectedItem = 1280
         assertEquals(1280, preview.appearances.last().maxContentWidth)
         assertFalse(preview.appearances.last().useFullWidth)
@@ -92,9 +82,8 @@ class MdLensSettingsConfigurableTest {
             MdLensAppearance(
                 theme = MdLensTheme.DARK,
                 profile = MdLensProfile.SPACIOUS,
-                bodyFontFamily = "Atkinson Hyperlegible",
-                codeFontFamily = "JetBrains Mono",
-                fontScale = 130,
+                fontFamily = "Atkinson Hyperlegible",
+                fontSize = 16,
                 maxContentWidth = 1152,
                 useFullWidth = true,
                 accentHeadings = true,
@@ -107,9 +96,8 @@ class MdLensSettingsConfigurableTest {
         configurable.apply()
         assertEquals(MdLensTheme.DARK, settings.theme)
         assertEquals(MdLensProfile.SPACIOUS, settings.profile)
-        assertEquals("Atkinson Hyperlegible", settings.bodyFontFamily)
-        assertEquals("JetBrains Mono", settings.codeFontFamily)
-        assertEquals(130, settings.fontScale)
+        assertEquals("Atkinson Hyperlegible", settings.fontFamily)
+        assertEquals(16, settings.fontSize)
         assertEquals(1152, settings.maxContentWidth)
         assertTrue(settings.useFullWidth)
         assertTrue(settings.accentHeadings)
@@ -128,9 +116,8 @@ class MdLensSettingsConfigurableTest {
             updateAppearance(
                 theme = MdLensTheme.LIGHT,
                 profile = MdLensProfile.COMPACT,
-                bodyFontFamily = "Legacy Reading Font",
-                codeFontFamily = "Legacy Code Font",
-                fontScale = 100,
+                fontFamily = "Legacy Reading Font",
+                fontSize = 14,
                 maxContentWidth = 1152,
                 useFullWidth = false,
             )
@@ -143,31 +130,22 @@ class MdLensSettingsConfigurableTest {
         )
         val component = configurable.createComponent()
         @Suppress("UNCHECKED_CAST")
-        val bodyFontField = findNamed(component, "bodyFont") as ComboBox<String>
-        @Suppress("UNCHECKED_CAST")
-        val codeFontField = findNamed(component, "codeFont") as ComboBox<String>
+        val fontField = findNamed(component, "font") as ComboBox<String>
         @Suppress("UNCHECKED_CAST")
         val contentWidthField = findNamed(component, "contentWidth") as ComboBox<Int>
 
-        assertEquals("Legacy Reading Font", bodyFontField.selectedItem)
-        assertEquals("Legacy Code Font", codeFontField.selectedItem)
+        assertEquals("Legacy Reading Font", fontField.selectedItem)
         assertEquals(1152, contentWidthField.selectedItem)
         assertEquals(
-            listOf("Default (system font)", "Legacy Reading Font", "Atkinson Hyperlegible"),
-            bodyFontField.items(),
-        )
-        assertEquals(
-            listOf("Default (system font)", "Legacy Code Font", "JetBrains Mono"),
-            codeFontField.items(),
+            listOf("Default (system font)", "Legacy Reading Font", "Atkinson Hyperlegible", "JetBrains Mono"),
+            fontField.items(),
         )
         assertFalse(configurable.isModified)
 
-        bodyFontField.selectedIndex = 0
-        codeFontField.selectedIndex = 0
+        fontField.selectedIndex = 0
         assertTrue(configurable.isModified)
         configurable.reset()
-        assertEquals("Legacy Reading Font", bodyFontField.selectedItem)
-        assertEquals("Legacy Code Font", codeFontField.selectedItem)
+        assertEquals("Legacy Reading Font", fontField.selectedItem)
         assertFalse(configurable.isModified)
 
         configurable.disposeUIResources()

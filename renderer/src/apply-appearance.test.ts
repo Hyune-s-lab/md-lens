@@ -4,15 +4,14 @@ import { applyAppearance } from "./apply-appearance";
 import type { RenderRequest } from "./render-request";
 
 const baseRequest: RenderRequest = {
-  version: 4,
+  version: 5,
   source: "",
   baseUrl: "file:///doc.md",
   documentType: "markdown",
   theme: "dark",
   profile: "compact",
-  bodyFontFamily: "",
-  codeFontFamily: "",
-  fontScale: 100,
+  fontFamily: "",
+  fontSize: 14,
   maxContentWidth: null,
 };
 

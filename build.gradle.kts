@@ -139,14 +139,11 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>New Features</h3>
-            <ul>
-              <li>Merge body and code font into a single font field with pixel-based font size.</li>
-              <li>Replace sliders with dropdowns and align all form controls.</li>
-            </ul>
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Remove optional JCEF module dependency that failed to resolve on 2025.1.</li>
+              <li>Restore optional JCEF module dependency to fix ClassNotFoundException on 2026.2.</li>
+              <li>Merge body and code font into a single font field with pixel-based font size.</li>
+              <li>Replace sliders with dropdowns and align all form controls.</li>
               <li>Replace deprecated SimpleListCellRenderer API.</li>
             </ul>
             <br/>

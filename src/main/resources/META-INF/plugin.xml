@@ -1,0 +1,32 @@
+<idea-plugin url="https://github.com/Hyune-s-lab/md-lens">
+    <id>dev.hyunelab.mdlens</id>
+    <name>MdLens</name>
+    <vendor url="https://github.com/Hyune-s-lab">Hyune-s-lab</vendor>
+
+    <description><![CDATA[
+        <p>MdLens is a read-only Markdown viewer for JetBrains IDEs.</p>
+        <p>It renders GitHub Flavored Markdown and Mermaid diagrams offline with GitHub Light and GitHub Dark themes independent of the IDE.</p>
+        <ul>
+            <li>GitHub Flavored Markdown and Mermaid diagrams</li>
+            <li>Independent GitHub Light and GitHub Dark themes</li>
+            <li>Compact and Spacious profiles with configurable fonts, text scaling, content width, and live preview</li>
+            <li>Automatic refresh with relative images and links</li>
+            <li>Offline rendering with untrusted content sanitization</li>
+        </ul>
+        <p>While enabled, MdLens opens supported Markdown and Mermaid files in its read-only viewer. AI and IDE tools can continue to modify the underlying files.</p>
+        <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/blob/main/docs/roadmap.md">roadmap</a> for implemented and planned features.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="jcef.xml">com.intellij.modules.jcef</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileEditorProvider implementation="dev.hyunelab.mdlens.editor.MdLensFileEditorProvider"/>
+        <applicationService serviceImplementation="dev.hyunelab.mdlens.settings.MdLensSettings"/>
+        <applicationConfigurable
+                parentId="tools"
+                id="dev.hyunelab.mdlens.settings"
+                displayName="MdLens"
+                instance="dev.hyunelab.mdlens.settings.MdLensSettingsConfigurable"/>
+    </extensions>
+</idea-plugin>

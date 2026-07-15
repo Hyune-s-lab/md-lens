@@ -1,0 +1,8 @@
+.DS_Store
+.idea/
+.intellijPlatform/
+.gradle/
+.kotlin/
+build/
+node_modules/
+dist/

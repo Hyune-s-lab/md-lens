@@ -1,0 +1,37 @@
+{
+  "name": "md-lens",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build:highlight-runtime": "node scripts/build-highlight-runtime.mjs",
+    "build:mermaid-runtime": "node scripts/build-mermaid-runtime.mjs",
+    "build:renderer": "vite build",
+    "build:runtime-licenses": "node scripts/build-runtime-licenses.mjs",
+    "inspect:jcef-theme": "node scripts/inspect-jcef-theme.mjs",
+    "measure:renderer": "node --expose-gc scripts/measure-renderer.mjs",
+    "test:highlight-runtime": "node scripts/test-highlight-runtime.mjs",
+    "test:mermaid-runtime": "node scripts/test-mermaid-runtime.mjs",
+    "test:renderer": "vitest run",
+    "typecheck:renderer": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dompurify": "3.4.11",
+    "github-markdown-css": "5.9.0",
+    "highlight.js": "11.11.1",
+    "marked": "18.0.6",
+    "mermaid": "11.16.0"
+  },
+  "devDependencies": {
+    "@iconify-json/mdi": "1.2.3",
+    "@types/node": "26.1.1",
+    "jsdom": "29.1.1",
+    "typescript": "7.0.2",
+    "vite": "8.1.4",
+    "vite-plugin-singlefile": "2.3.3",
+    "vitest": "4.1.10"
+  }
+}

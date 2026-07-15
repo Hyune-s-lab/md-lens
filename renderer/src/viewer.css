@@ -1,0 +1,181 @@
+:root {
+  color-scheme: light;
+  background: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  background: #0d1117;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: inherit;
+}
+
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 32px;
+}
+
+.markdown-body img {
+  height: auto;
+}
+
+.markdown-body input[type="checkbox"] {
+  pointer-events: none;
+}
+
+:root[data-theme="light"] .markdown-body pre {
+  border: 1px solid #d1d9e0;
+}
+
+:root[data-accent-headings="true"] .markdown-body h1,
+:root[data-accent-headings="true"] .markdown-body h2,
+:root[data-accent-headings="true"] .markdown-body h3,
+:root[data-accent-headings="true"] .markdown-body h4,
+:root[data-accent-headings="true"] .markdown-body h5,
+:root[data-accent-headings="true"] .markdown-body h6 {
+  color: var(--md-lens-accent);
+}
+
+:root[data-accent-bold="true"] .markdown-body strong,
+:root[data-accent-bold="true"] .markdown-body b {
+  color: var(--md-lens-bold-accent);
+}
+
+:root[data-accent-inline-code="true"] .markdown-body :not(pre) > code {
+  color: var(--md-lens-code-accent);
+}
+
+:root[data-profile="spacious"] .markdown-body h1,
+:root[data-profile="spacious"] .markdown-body h2,
+:root[data-profile="spacious"] .markdown-body h3,
+:root[data-profile="spacious"] .markdown-body h4,
+:root[data-profile="spacious"] .markdown-body h5,
+:root[data-profile="spacious"] .markdown-body h6 {
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+
+:root[data-profile="spacious"] .markdown-body h1 {
+  margin-top: 1.4em;
+  margin-bottom: 0.65em;
+  font-size: 2.2em;
+}
+
+:root[data-profile="spacious"] .markdown-body h2 {
+  margin-top: 1.35em;
+  margin-bottom: 0.6em;
+  font-size: 1.7em;
+}
+
+:root[data-profile="spacious"] .markdown-body h3 {
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  font-size: 1.4em;
+}
+
+:root[data-profile="spacious"] .markdown-body p {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+:root[data-profile="spacious"] .markdown-body li + li {
+  margin-top: 0.45em;
+}
+
+:root[data-profile="spacious"] .markdown-body blockquote {
+  padding: 0.25em 1em;
+  border-left-color: var(--md-lens-accent);
+}
+
+:root[data-profile="spacious"] .markdown-body blockquote > :first-child {
+  margin-top: 0;
+}
+
+:root[data-profile="spacious"] .markdown-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+:root[data-profile="spacious"] .markdown-body pre {
+  padding: 1em;
+}
+
+:root[data-profile="spacious"] .markdown-body th,
+:root[data-profile="spacious"] .markdown-body td {
+  padding: 0.75em 1em;
+}
+
+.markdown-body pre code.hljs {
+  padding: 0;
+  background: transparent;
+}
+
+.markdown-body[data-custom-code-font="true"] code,
+.markdown-body[data-custom-code-font="true"] kbd,
+.markdown-body[data-custom-code-font="true"] pre,
+.markdown-body[data-custom-code-font="true"] samp {
+  font-family: var(--md-lens-code-font);
+}
+
+.md-lens-diagram {
+  overflow-x: auto;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.md-lens-diagram svg {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+
+.md-lens-diagram-error {
+  padding: 16px;
+  border-left: 4px solid #cf222e;
+  color: #cf222e;
+  text-align: left;
+}
+
+:root[data-theme="dark"] .md-lens-diagram-error {
+  border-left-color: #ff7b72;
+  color: #ff7b72;
+}
+
+.md-lens-diagram-error strong,
+.md-lens-diagram-error span {
+  display: block;
+}
+
+.md-lens-diagram-error pre {
+  overflow-x: auto;
+  margin-bottom: 0;
+  color: inherit;
+  white-space: pre;
+}
+
+.md-lens-error {
+  color: #cf222e;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 20px;
+  }
+}

@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Draft GitHub Release tag to build and verify
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  verify-draft-release:
+    name: Verify and attach plugin ZIP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release tag
+        id: release
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm release is a draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: test "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = true
+
+      - name: Check out release
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+
+      - name: Resolve release artifact
+        id: artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          version="$(sed -n 's/^version=//p' gradle.properties)"
+          expected_tag="v$version"
+          test "$RELEASE_TAG" = "$expected_tag"
+          test "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json name --jq .name)" = "$expected_tag"
+          echo "file=build/distributions/md-lens-$version.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Check and build plugin
+        run: ./gradlew check buildPlugin verifyPluginProjectConfiguration verifyPluginStructure
+
+      - name: Attach plugin distribution
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLUGIN_FILE: ${{ steps.artifact.outputs.file }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          test -f "$PLUGIN_FILE"
+          gh release upload "$RELEASE_TAG" "$PLUGIN_FILE" --clobber
+
+      - name: Upload to JetBrains Marketplace
+        env:
+          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+          PLUGIN_FILE: ${{ steps.artifact.outputs.file }}
+        run: |
+          test -n "$JETBRAINS_MARKETPLACE_TOKEN"
+          test -f "$PLUGIN_FILE"
+          curl --fail-with-body --show-error --silent --request POST \
+            --header "Authorization: Bearer $JETBRAINS_MARKETPLACE_TOKEN" \
+            --form "xmlId=dev.hyunelab.mdlens" \
+            --form "file=@$PLUGIN_FILE" \
+            https://plugins.jetbrains.com/api/updates/upload

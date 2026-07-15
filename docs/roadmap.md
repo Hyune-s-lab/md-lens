@@ -1,12 +1,5 @@
 # Roadmap
 
-## 0.4.2 — Settings Redesign
-
-- Merge body and code font into a single font field (bridge version 5)
-- Replace text scale percentage with font size in pixels (default 14)
-- Replace sliders with dropdowns for content width (128 px steps)
-- Align all form controls and tighten settings panel spacing
-
 ## 0.4.1 — Compatibility Backport
 
 - Lower the IDE compatibility baseline from 2026.1 to 2025.1 so MdLens runs on IDEs from the past year

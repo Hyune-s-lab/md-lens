@@ -139,23 +139,15 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>New Features</h3>
+            <h3>Compatibility</h3>
             <ul>
-              <li>Syntax highlighting for fenced code blocks with 12 bundled language grammars.</li>
-              <li>Highlight groups: individually toggled heading, bold, and inline code accents, independent of the Density setting.</li>
-              <li>Editor, split, and preview layouts with preview as the default, so files can be edited without disabling MdLens.</li>
-              <li>Links to other Markdown files now scroll to their heading anchor.</li>
-              <li>Recommended fonts trimmed to five distinct choices each, adding D2Coding for body text.</li>
-            </ul>
-            <h3>Bug Fixes</h3>
-            <ul>
-              <li>Apply the frontmatter diagram background so sequence and state diagrams keep their white canvas on the dark theme.</li>
+              <li>Lower the IDE compatibility baseline from 2026.1 to 2025.1 so MdLens runs on IDEs from the past year.</li>
             </ul>
             <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v${project.version}">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {
-            sinceBuild = "261"
+            sinceBuild = "251"
         }
 
         vendor {
@@ -166,6 +158,9 @@ intellijPlatform {
 
     pluginVerification {
         ides {
+            create(IntelliJPlatformType.IntellijIdeaUltimate, "2025.1")
+            create(IntelliJPlatformType.IntellijIdeaUltimate, "2025.2")
+            create(IntelliJPlatformType.IntellijIdeaUltimate, "2025.3")
             create(IntelliJPlatformType.IntellijIdeaUltimate, "2026.1.4")
             latest {
                 types = listOf(IntelliJPlatformType.IntellijIdeaUltimate)

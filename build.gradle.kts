@@ -147,6 +147,7 @@ intellijPlatform {
               <li>Replace sliders with dropdowns for content width (128 px steps).</li>
               <li>Align all form controls and tighten settings panel spacing.</li>
             </ul>
+            <br/>
             <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v${project.version}">GitHub release notes</a>.</p>
         """.trimIndent()
 

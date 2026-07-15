@@ -1,10 +1,11 @@
 # Roadmap
 
-## 0.4.2 — Settings Redesign and Verifier Cleanup
+## 0.4.3 — Settings Redesign and Verifier Fix
 
+- Restore optional JCEF module dependency to fix ClassNotFoundException on 2026.2
 - Merge body and code font into a single font field with pixel-based font size
 - Replace sliders with dropdowns and align all form controls
-- Remove optional JCEF module dependency and replace deprecated renderer API
+- Replace deprecated SimpleListCellRenderer API
 
 ## 0.4.1 — Compatibility Backport
 

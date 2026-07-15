@@ -1,25 +1,24 @@
 package dev.hyunelab.mdlens
 
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PluginDescriptorDependencyTest {
     @Test
-    fun `depends only on the platform module and probes JCEF at runtime`() {
+    fun `declares the JCEF plugin required by the editor`() {
         val descriptor = requireNotNull(javaClass.getResource("/META-INF/plugin.xml")).readText()
 
+        // The optional dependency wires the JCEF module's class loader as a parent of the
+        // plugin's class loader. Since 2026.2 the com.intellij.ui.jcef classes live in the
+        // separate com.intellij.modules.jcef module, so dropping this declaration breaks the
+        // plugin with ClassNotFoundException: com.intellij.ui.jcef.JBCefApp. On 2025.1 the
+        // module does not resolve (plugin verifier warns), which is harmless because the JCEF
+        // classes are still part of the platform there.
         assertTrue(
-            "<depends>com.intellij.modules.platform</depends>" in descriptor,
-            "The plugin must declare the platform module dependency",
+            "<depends optional=\"true\" config-file=\"jcef.xml\">com.intellij.modules.jcef</depends>" in descriptor,
+            "JCEF API classes must be visible when the IDE provides the JCEF plugin",
         )
-        // JCEF availability is probed at runtime via JBCefApp.isSupported(); an optional
-        // module dependency is unnecessary and fails to resolve on 2025.1 in the plugin verifier.
-        assertFalse(
-            "com.intellij.modules.jcef" in descriptor,
-            "The plugin must not declare a JCEF module dependency",
-        )
-        assertNull(javaClass.getResource("/META-INF/jcef.xml"))
+        assertNotNull(javaClass.getResource("/META-INF/jcef.xml"))
     }
 }

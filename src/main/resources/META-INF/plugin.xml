@@ -18,6 +18,7 @@
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="jcef.xml">com.intellij.modules.jcef</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileEditorProvider implementation="dev.hyunelab.mdlens.editor.MdLensFileEditorProvider"/>

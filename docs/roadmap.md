@@ -1,5 +1,15 @@
 # Roadmap
 
+## 0.4.4 — Better Defaults and Highlight Colors
+
+- Add a Sync with IDE theme option that follows the IDE light/dark appearance and make it the default
+- Change the default density to Spacious with the Headings highlight enabled (Full width stays the default)
+- Let each highlight group pick its color from eight presets with built-in light/dark pairs
+- Change the default Bold highlight color from purple to gold
+- Decouple the blockquote border color from the Headings accent (fixed gray, matching GitHub)
+- Add a Restore defaults action and align the settings form on a two-column grid
+- Add settings preview tabs (English, 한국어, 日本語, 中文, Code, Mermaid) defaulting to the IDE display language
+
 ## 0.4.3 — Settings Redesign and Verifier Fix
 
 - Restore optional JCEF module dependency to fix ClassNotFoundException on 2026.2
@@ -24,7 +34,6 @@ MdLens was originally developed as MarkdownNeat. Releases 0.1.x through 0.4.x sh
 
 ## Later
 
-- Let each highlight group's color be customized individually.
 - Detect viewer bootstrap failures, log them, and fall back to the plain-text viewer.
 - Add D2 and Excalidraw through the shared optional-runtime boundary.
 - Add bundled themes beyond GitHub Light and GitHub Dark.

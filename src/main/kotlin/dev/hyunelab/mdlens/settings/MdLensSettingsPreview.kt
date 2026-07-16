@@ -7,5 +7,7 @@ internal interface MdLensSettingsPreview {
 
     fun render(appearance: MdLensAppearance)
 
+    fun selectSample(sample: MdLensPreviewSample)
+
     fun dispose()
 }

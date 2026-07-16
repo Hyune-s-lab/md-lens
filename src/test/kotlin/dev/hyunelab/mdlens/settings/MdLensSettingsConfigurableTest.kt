@@ -6,8 +6,10 @@ import com.intellij.ui.components.JBTextField
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JToggleButton
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -30,9 +32,15 @@ class MdLensSettingsConfigurableTest {
         )
         val component = configurable.createComponent()
         val layout = (component as JPanel).layout as BorderLayout
-        assertEquals(preview.component, layout.getLayoutComponent(BorderLayout.CENTER))
+        val previewPanel = layout.getLayoutComponent(BorderLayout.CENTER) as JPanel
+        val previewLayout = previewPanel.layout as BorderLayout
+        assertEquals(preview.component, previewLayout.getLayoutComponent(BorderLayout.CENTER))
+        assertEquals(
+            findNamed(component, "previewSampleTabs"),
+            previewLayout.getLayoutComponent(BorderLayout.NORTH),
+        )
         assertTrue(contains(component, preview.component))
-        assertEquals(MdLensProfile.COMPACT, preview.appearances.last().profile)
+        assertEquals(MdLensProfile.SPACIOUS, preview.appearances.last().profile)
         assertTrue(preview.appearances.last().useFullWidth)
         @Suppress("UNCHECKED_CAST")
         val themeField = findNamed(component, "theme") as ComboBox<MdLensTheme>
@@ -43,12 +51,25 @@ class MdLensSettingsConfigurableTest {
         val accentHeadingsField = findNamed(component, "accentHeadings") as JBCheckBox
         val accentBoldField = findNamed(component, "accentBold") as JBCheckBox
         val accentInlineCodeField = findNamed(component, "accentInlineCode") as JBCheckBox
+        @Suppress("UNCHECKED_CAST")
+        val accentHeadingsColorField = findNamed(component, "accentHeadingsColor") as ComboBox<MdLensAccentColor>
+        @Suppress("UNCHECKED_CAST")
+        val accentBoldColorField = findNamed(component, "accentBoldColor") as ComboBox<MdLensAccentColor>
+        @Suppress("UNCHECKED_CAST")
+        val accentInlineCodeColorField = findNamed(component, "accentInlineCodeColor") as ComboBox<MdLensAccentColor>
         val fontSizeField = findNamed(component, "fontSize") as JBTextField
         @Suppress("UNCHECKED_CAST")
         val contentWidthField = findNamed(component, "contentWidth") as ComboBox<Int>
-        assertFalse(accentHeadingsField.isSelected)
+        assertEquals(MdLensTheme.SYNC, themeField.selectedItem)
+        assertTrue(accentHeadingsField.isSelected)
         assertFalse(accentBoldField.isSelected)
         assertFalse(accentInlineCodeField.isSelected)
+        assertEquals(MdLensAccentColor.ORANGE, accentHeadingsColorField.selectedItem)
+        assertEquals(MdLensAccentColor.GOLD, accentBoldColorField.selectedItem)
+        assertEquals(MdLensAccentColor.GREEN, accentInlineCodeColorField.selectedItem)
+        assertTrue(accentHeadingsColorField.isEnabled)
+        assertFalse(accentBoldColorField.isEnabled)
+        assertFalse(accentInlineCodeColorField.isEnabled)
         assertEquals("Default (system font)", fontField.getItemAt(0))
         assertEquals(
             listOf("Default (system font)", "Atkinson Hyperlegible", "JetBrains Mono"),
@@ -64,12 +85,12 @@ class MdLensSettingsConfigurableTest {
         contentWidthField.selectedItem = -1
         assertTrue(preview.appearances.last().useFullWidth)
         themeField.selectedItem = MdLensTheme.DARK
-        profileField.selectedItem = MdLensProfile.SPACIOUS
-        assertFalse(accentHeadingsField.isSelected)
-        assertFalse(accentBoldField.isSelected)
-        assertFalse(accentInlineCodeField.isSelected)
-        accentHeadingsField.doClick()
+        accentBoldField.doClick()
+        assertTrue(accentBoldColorField.isEnabled)
+        accentBoldColorField.selectedItem = MdLensAccentColor.PINK
+        assertEquals(MdLensAccentColor.PINK, preview.appearances.last().accentBoldColor)
         accentInlineCodeField.doClick()
+        assertTrue(accentInlineCodeColorField.isEnabled)
         fontField.selectedItem = "Atkinson Hyperlegible"
         fontSizeField.text = "16"
         contentWidthField.selectedItem = 1280
@@ -87,8 +108,11 @@ class MdLensSettingsConfigurableTest {
                 maxContentWidth = 1152,
                 useFullWidth = true,
                 accentHeadings = true,
-                accentBold = false,
+                accentBold = true,
                 accentInlineCode = true,
+                accentHeadingsColor = MdLensAccentColor.ORANGE,
+                accentBoldColor = MdLensAccentColor.PINK,
+                accentInlineCodeColor = MdLensAccentColor.GREEN,
             ),
             preview.appearances.last(),
         )
@@ -101,13 +125,96 @@ class MdLensSettingsConfigurableTest {
         assertEquals(1152, settings.maxContentWidth)
         assertTrue(settings.useFullWidth)
         assertTrue(settings.accentHeadings)
-        assertFalse(settings.accentBold)
+        assertTrue(settings.accentBold)
         assertTrue(settings.accentInlineCode)
+        assertEquals(MdLensAccentColor.PINK, settings.accentBoldColor)
         assertEquals(1, notifications)
         assertFalse(configurable.isModified)
 
         configurable.disposeUIResources()
         assertTrue(preview.disposed)
+    }
+
+    @Test
+    fun testRestoreDefaultsResetsEveryFieldWithoutApplying() {
+        val settings = MdLensSettings().apply {
+            updateAppearance(
+                theme = MdLensTheme.DARK,
+                profile = MdLensProfile.COMPACT,
+                fontFamily = "Atkinson Hyperlegible",
+                fontSize = 18,
+                maxContentWidth = 1280,
+                useFullWidth = false,
+                accentBold = true,
+                accentBoldColor = MdLensAccentColor.PURPLE,
+            )
+        }
+        var notifications = 0
+        val configurable = MdLensSettingsConfigurable(
+            settings = settings,
+            notifySettingsChanged = { notifications += 1 },
+            availableFontFamilies = { listOf("Atkinson Hyperlegible") },
+            previewFactory = { null },
+        )
+        val component = configurable.createComponent()
+        assertFalse(configurable.isModified)
+
+        (findNamed(component, "restoreDefaults") as JButton).doClick()
+
+        @Suppress("UNCHECKED_CAST")
+        val themeField = findNamed(component, "theme") as ComboBox<MdLensTheme>
+        @Suppress("UNCHECKED_CAST")
+        val profileField = findNamed(component, "profile") as ComboBox<MdLensProfile>
+        val accentHeadingsField = findNamed(component, "accentHeadings") as JBCheckBox
+        val accentBoldField = findNamed(component, "accentBold") as JBCheckBox
+        @Suppress("UNCHECKED_CAST")
+        val accentBoldColorField = findNamed(component, "accentBoldColor") as ComboBox<MdLensAccentColor>
+        val fontSizeField = findNamed(component, "fontSize") as JBTextField
+        @Suppress("UNCHECKED_CAST")
+        val contentWidthField = findNamed(component, "contentWidth") as ComboBox<Int>
+        assertEquals(MdLensTheme.SYNC, themeField.selectedItem)
+        assertEquals(MdLensProfile.SPACIOUS, profileField.selectedItem)
+        assertTrue(accentHeadingsField.isSelected)
+        assertFalse(accentBoldField.isSelected)
+        assertEquals(MdLensAccentColor.GOLD, accentBoldColorField.selectedItem)
+        assertFalse(accentBoldColorField.isEnabled)
+        assertEquals("Default (system font)", (findNamed(component, "font") as ComboBox<*>).selectedItem)
+        assertEquals("14", fontSizeField.text)
+        assertEquals(-1, contentWidthField.selectedItem)
+        assertTrue(configurable.isModified)
+        assertEquals(0, notifications)
+
+        configurable.reset()
+        assertFalse(configurable.isModified)
+        assertEquals(MdLensTheme.DARK, themeField.selectedItem)
+
+        configurable.disposeUIResources()
+    }
+
+    @Test
+    fun testPreviewSampleTabsSwitchTheRenderedSample() {
+        val preview = RecordingSettingsPreview()
+        val configurable = MdLensSettingsConfigurable(
+            settings = MdLensSettings(),
+            notifySettingsChanged = {},
+            availableFontFamilies = { emptyList() },
+            previewFactory = { preview },
+        )
+        val component = configurable.createComponent()
+
+        assertTrue(preview.samples.isNotEmpty())
+        val selectedTabs = MdLensPreviewSample.entries.filter { sample ->
+            (findNamed(component, "previewSample${sample.name}") as JToggleButton).isSelected
+        }
+        assertEquals(listOf(preview.samples.last()), selectedTabs)
+        findNamed(component, "previewSampleSeparator")
+
+        (findNamed(component, "previewSampleJAPANESE") as JToggleButton).doClick()
+        assertEquals(MdLensPreviewSample.JAPANESE, preview.samples.last())
+        (findNamed(component, "previewSampleENGLISH") as JToggleButton).doClick()
+        assertEquals(MdLensPreviewSample.ENGLISH, preview.samples.last())
+
+        configurable.disposeUIResources()
     }
 
     @Test
@@ -172,10 +279,15 @@ class MdLensSettingsConfigurableTest {
     private class RecordingSettingsPreview : MdLensSettingsPreview {
         override val component: JComponent = JPanel()
         val appearances = mutableListOf<MdLensAppearance>()
+        val samples = mutableListOf<MdLensPreviewSample>()
         var disposed = false
 
         override fun render(appearance: MdLensAppearance) {
             appearances += appearance
+        }
+
+        override fun selectSample(sample: MdLensPreviewSample) {
+            samples += sample
         }
 
         override fun dispose() {

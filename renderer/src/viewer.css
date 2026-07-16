@@ -101,7 +101,6 @@ body {
 
 :root[data-profile="spacious"] .markdown-body blockquote {
   padding: 0.25em 1em;
-  border-left-color: var(--md-lens-accent);
 }
 
 :root[data-profile="spacious"] .markdown-body blockquote > :first-child {

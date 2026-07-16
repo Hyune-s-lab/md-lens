@@ -21,54 +21,16 @@ internal fun createMdLensSettingsPreview(): MdLensSettingsPreview? {
     return runCatching { MdLensJcefSettingsPreview() }.getOrNull()
 }
 
-internal val MARKDOWN_NEAT_SETTINGS_PREVIEW_SAMPLE = """
-    # H1 — Reading Preview
-
-    The preview uses the same renderer as a document, including **bold text**, `inline code`, and [links](#configuration-example).
-
-    ## H2 — Typography hierarchy
-
-    ### H3 — Text styles
-
-    Compare headings, paragraphs, and emphasis before applying appearance changes.
-
-    ## H2 — TypeScript example
-
-    ```typescript
-    interface RenderRequest {
-      source: string;
-      density: "compact" | "spacious";
-    }
-
-    export function render(request: RenderRequest): string {
-      const label = request.density === "spacious" ? "Reading" : "Compact";
-      return `${'$'}{label}: ${'$'}{request.source.length} characters`;
-    }
-    ```
-
-    ### H3 — Configuration example
-
-    ```yaml
-    viewer:
-      mode: read-only
-      theme: github-dark
-      density: spacious
-      typography:
-        scale: 110
-        content-width: full
-      offline: true
-    ```
-
-    > Blockquotes follow the density, and highlight groups accent headings, bold, and inline code.
-
-    - Compact keeps familiar GitHub spacing.
-    - Spacious is tuned for longer reading sessions.
-""".trimIndent()
-
 private class MdLensJcefSettingsPreview : MdLensSettingsPreview {
     private val browser = JBCefBrowser()
     private val loadRuntimeQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
     private val previewSettings = MdLensSettings()
+
+    @Volatile
+    private var sample = MdLensPreviewSample.ENGLISH
+
+    @Volatile
+    private var lastAppearance: MdLensAppearance? = null
 
     @Volatile
     private var rendererReady = false
@@ -108,9 +70,10 @@ private class MdLensJcefSettingsPreview : MdLensSettingsPreview {
         if (disposed) {
             return
         }
+        lastAppearance = appearance
         previewSettings.updateAppearance(appearance)
         val request = rendererRequestJson(
-            source = MARKDOWN_NEAT_SETTINGS_PREVIEW_SAMPLE,
+            source = sample.markdown,
             baseUrl = PREVIEW_URL,
             documentType = "markdown",
             settings = previewSettings,
@@ -119,6 +82,14 @@ private class MdLensJcefSettingsPreview : MdLensSettingsPreview {
         if (rendererReady) {
             executeRender(request)
         }
+    }
+
+    override fun selectSample(sample: MdLensPreviewSample) {
+        if (this.sample == sample) {
+            return
+        }
+        this.sample = sample
+        lastAppearance?.let(::render)
     }
 
     override fun dispose() {

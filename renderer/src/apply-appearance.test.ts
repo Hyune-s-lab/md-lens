@@ -42,6 +42,34 @@ describe("applyAppearance highlight groups", () => {
     expect(document.documentElement.dataset.accentBold).toBeUndefined();
   });
 
+  it("applies the default accent presets per theme", () => {
+    const viewer = document.createElement("main");
+    applyAppearance(document.documentElement, viewer, baseRequest);
+
+    expect(document.documentElement.style.getPropertyValue("--md-lens-accent")).toBe("#f0883e");
+    expect(document.documentElement.style.getPropertyValue("--md-lens-bold-accent")).toBe("#e3b341");
+    expect(document.documentElement.style.getPropertyValue("--md-lens-code-accent")).toBe("#7ee787");
+
+    applyAppearance(document.documentElement, viewer, { ...baseRequest, theme: "light" });
+    expect(document.documentElement.style.getPropertyValue("--md-lens-accent")).toBe("#bc4c00");
+    expect(document.documentElement.style.getPropertyValue("--md-lens-bold-accent")).toBe("#9a6700");
+    expect(document.documentElement.style.getPropertyValue("--md-lens-code-accent")).toBe("#116329");
+  });
+
+  it("applies selected accent presets and falls back on unknown keys", () => {
+    const viewer = document.createElement("main");
+    applyAppearance(document.documentElement, viewer, {
+      ...baseRequest,
+      accentHeadingsColor: "blue",
+      accentBoldColor: "pink",
+      accentInlineCodeColor: "not-a-color",
+    });
+
+    expect(document.documentElement.style.getPropertyValue("--md-lens-accent")).toBe("#79c0ff");
+    expect(document.documentElement.style.getPropertyValue("--md-lens-bold-accent")).toBe("#f778ba");
+    expect(document.documentElement.style.getPropertyValue("--md-lens-code-accent")).toBe("#7ee787");
+  });
+
   it("keeps the pre-0.4 behavior for requests without accent fields", () => {
     const viewer = document.createElement("main");
     applyAppearance(document.documentElement, viewer, { ...baseRequest, profile: "spacious" });

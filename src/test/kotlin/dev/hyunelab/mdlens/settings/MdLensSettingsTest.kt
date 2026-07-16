@@ -27,23 +27,48 @@ class MdLensSettingsTest {
         assertTrue(settings.accentHeadings)
         assertFalse(settings.accentBold)
         assertFalse(settings.accentInlineCode)
+        assertEquals(MdLensAccentColor.ORANGE, settings.accentHeadingsColor)
+        assertEquals(MdLensAccentColor.GOLD, settings.accentBoldColor)
+        assertEquals(MdLensAccentColor.GREEN, settings.accentInlineCodeColor)
     }
 
     @Test
-    fun `uses light by default and reports actual theme changes`() {
+    fun `loads persisted accent colors and ignores unknown color values`() {
+        val serializedState = Element("state").apply {
+            addContent(Element("option").setAttribute("name", "accentBoldColor").setAttribute("value", "pink"))
+            addContent(Element("option").setAttribute("name", "accentInlineCodeColor").setAttribute("value", "no-such-color"))
+        }
+        val state = XmlSerializer.deserialize(
+            serializedState,
+            MdLensSettings.SettingsState::class.java,
+        )
         val settings = MdLensSettings()
 
-        assertEquals(MdLensTheme.LIGHT, settings.theme)
+        settings.loadState(state)
+
+        assertEquals(MdLensAccentColor.PINK, settings.accentBoldColor)
+        assertEquals(MdLensAccentColor.GREEN, settings.accentInlineCodeColor)
+    }
+
+    @Test
+    fun `syncs with the IDE by default and reports actual theme changes`() {
+        val settings = MdLensSettings()
+
+        assertEquals(MdLensTheme.SYNC, settings.theme)
+        assertEquals("Sync with IDE", MdLensTheme.SYNC.toString())
         assertEquals("GitHub Light", MdLensTheme.LIGHT.toString())
         assertEquals("GitHub Dark", MdLensTheme.DARK.toString())
-        assertEquals(MdLensProfile.COMPACT, settings.profile)
+        assertEquals(MdLensProfile.SPACIOUS, settings.profile)
         assertEquals("", settings.fontFamily)
         assertEquals(14, settings.fontSize)
         assertEquals(1152, settings.maxContentWidth)
         assertTrue(settings.useFullWidth)
-        assertFalse(settings.accentHeadings)
+        assertTrue(settings.accentHeadings)
         assertFalse(settings.accentBold)
         assertFalse(settings.accentInlineCode)
+        assertEquals(MdLensAccentColor.ORANGE, settings.accentHeadingsColor)
+        assertEquals(MdLensAccentColor.GOLD, settings.accentBoldColor)
+        assertEquals(MdLensAccentColor.GREEN, settings.accentInlineCodeColor)
         assertTrue(
             settings.updateAppearance(
                 theme = MdLensTheme.DARK,
@@ -71,6 +96,19 @@ class MdLensSettingsTest {
                 useFullWidth = true,
             ),
         )
+        assertTrue(
+            settings.updateAppearance(
+                settings.appearance.copy(accentBoldColor = MdLensAccentColor.PURPLE),
+            ),
+        )
+        assertEquals(MdLensAccentColor.PURPLE, settings.accentBoldColor)
+    }
+
+    @Test
+    fun `resolves the sync theme to a concrete renderer theme`() {
+        assertTrue(MdLensTheme.SYNC.resolveForRendering() in setOf(MdLensTheme.LIGHT, MdLensTheme.DARK))
+        assertEquals(MdLensTheme.LIGHT, MdLensTheme.LIGHT.resolveForRendering())
+        assertEquals(MdLensTheme.DARK, MdLensTheme.DARK.resolveForRendering())
     }
 
     @Test

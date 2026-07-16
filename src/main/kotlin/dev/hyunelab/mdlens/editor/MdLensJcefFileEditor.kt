@@ -1,6 +1,7 @@
 package dev.hyunelab.mdlens.editor
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
@@ -97,6 +98,12 @@ internal class MdLensJcefFileEditor(
         ApplicationManager.getApplication().messageBus.connect(this).subscribe(
             MdLensSettingsListener.TOPIC,
             MdLensSettingsListener { scheduleSettingsRender() },
+        )
+
+        // The Sync with IDE theme resolves at render time, so a LaF switch must re-render.
+        ApplicationManager.getApplication().messageBus.connect(this).subscribe(
+            LafManagerListener.TOPIC,
+            LafManagerListener { scheduleSettingsRender() },
         )
 
         browser.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {

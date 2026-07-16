@@ -29,7 +29,8 @@
 - `docs/architecture.md` MUST describe only the current architecture; accepted decisions belong under `docs/decisions/`.
 - Accepted decision records under `docs/decisions/` MUST be written in Korean.
 - Marketplace Overview MUST describe durable product capabilities, not version-specific implementation details.
-- Marketplace What's New MUST summarize only the current release, group changes by change type like the GitHub Release notes, and link to its GitHub Release notes.
+- Marketplace Overview MUST link only to the GitHub repository root, not to individual documents such as the roadmap.
+- Marketplace What's New MUST summarize only the current release, group changes by change type like the GitHub Release notes, and MUST NOT contain links.
 - Detailed status or decisions MUST NOT be duplicated across documents.
 
 ## Release Preparation

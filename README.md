@@ -5,7 +5,7 @@
 
 ## Key Features
 
-- **Themes** — GitHub Light and GitHub Dark today, with more bundled themes planned
+- **Themes** — GitHub Light and GitHub Dark with optional IDE sync, and more bundled themes planned
 - **Architecture diagrams** — Mermaid 11.16.0 in Markdown and standalone files, with more diagram DSLs planned
 - **Reading appearance** — Compact and Spacious profiles, separate body and code fonts, adjustable text scaling and content width, and live preview
 - **Lightweight viewing** — read-only, offline-first rendering without editing or background indexing

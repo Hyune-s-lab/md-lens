@@ -15,4 +15,7 @@ export interface RenderRequest {
   accentHeadings?: boolean;
   accentBold?: boolean;
   accentInlineCode?: boolean;
+  accentHeadingsColor?: string;
+  accentBoldColor?: string;
+  accentInlineCodeColor?: string;
 }

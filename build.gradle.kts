@@ -139,15 +139,14 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>Bug Fixes</h3>
+            <h3>New Features</h3>
             <ul>
-              <li>Restore optional JCEF module dependency to fix ClassNotFoundException on 2026.2.</li>
-              <li>Merge body and code font into a single font field with pixel-based font size.</li>
-              <li>Replace sliders with dropdowns and align all form controls.</li>
-              <li>Replace deprecated SimpleListCellRenderer API.</li>
+              <li>Add a Sync with IDE theme option that follows the IDE light and dark appearance, now the default.</li>
+              <li>Let each highlight group pick its color from eight presets with built-in light and dark pairs.</li>
+              <li>Change the default appearance to Spacious density with the Headings highlight enabled and a gold Bold highlight.</li>
+              <li>Add a Restore defaults action and a tighter two-column settings layout.</li>
+              <li>Add settings preview tabs for English, Korean, Japanese, Chinese, code snippets, and Mermaid diagrams.</li>
             </ul>
-            <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v${project.version}">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

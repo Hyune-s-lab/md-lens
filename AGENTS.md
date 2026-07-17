@@ -26,6 +26,7 @@
 
 - `README.md` MUST remain a concise product entry point and describe only key product capabilities.
 - `docs/roadmap.md` MUST own versioned release scope and future work.
+- `docs/roadmap.md` MUST roll released work up to one summary line per minor version; per-release detail belongs to the GitHub Release notes.
 - `docs/architecture.md` MUST describe only the current architecture; accepted decisions belong under `docs/decisions/`.
 - Accepted decision records under `docs/decisions/` MUST be written in Korean.
 - Marketplace Overview MUST describe durable product capabilities, not version-specific implementation details.

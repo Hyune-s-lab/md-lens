@@ -2,9 +2,14 @@
 
 ## Released
 
-MdLens was originally developed as MarkdownNeat. Releases before 0.4.1 shipped under the previous plugin at <https://github.com/Hyune-s-lab/markdown-neat> (archived). Per-release detail lives in the GitHub Release notes.
+MdLens releases start at 0.4.0 in this repository. Per-release detail lives in the GitHub Release notes.
 
 - **0.4.x** — Syntax highlighting, highlight groups with color presets, IDE-synced theme with better defaults, settings redesign with multilingual preview tabs, editing handoff, anchor navigation, and the 2025.1 compatibility backport
+
+## Earlier Releases
+
+MdLens was originally developed as MarkdownNeat. Releases before 0.4.0 shipped under the previous plugin at <https://github.com/Hyune-s-lab/markdown-neat> (archived).
+
 - **0.3.x** — Reading profiles, font selection, text scaling, content width, and live preview
 - **0.2.x** — Mermaid diagrams, bundled runtime with offline icons, and modular IDE compatibility
 - **0.1.x** — Markdown viewer with GitHub Flavored Markdown, themes, offline rendering, and JCEF fallback

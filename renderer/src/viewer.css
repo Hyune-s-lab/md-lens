@@ -125,6 +125,22 @@ body {
   background: transparent;
 }
 
+.markdown-body .markdown-alert-title .octicon {
+  margin-right: 8px;
+}
+
+.markdown-body .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .markdown-body[data-custom-code-font="true"] code,
 .markdown-body[data-custom-code-font="true"] kbd,
 .markdown-body[data-custom-code-font="true"] pre,

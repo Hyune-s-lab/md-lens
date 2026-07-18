@@ -18,6 +18,8 @@ class MdLensSettingsPreviewTest {
             assertTrue("(?<!`)`[^`\n]+`(?!`)".toRegex().containsMatchIn(markdown), "$sample must contain inline code")
             assertTrue(markdown.contains("| ---"), "$sample must contain a table separator row")
             assertTrue(markdown.contains("\n> "), "$sample must contain a blockquote")
+            assertTrue(markdown.contains("> [!TIP]"), "$sample must contain a GitHub alert")
+            assertTrue(markdown.contains("[^1]") && markdown.contains("\n[^1]: "), "$sample must contain a footnote")
             assertEquals(0, "```".toRegex().findAll(markdown).count(), "$sample must leave code blocks to the Code sample")
         }
     }

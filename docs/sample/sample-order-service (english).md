@@ -19,6 +19,16 @@ ASCII-filename baseline for comparing against the non-ASCII samples. Includes ta
 - [x] Remote icon diagrams
 - [ ] Release 0.3.1
 
+## Alerts and Footnotes
+
+> [!NOTE]
+> Alerts render as GitHub-style callouts — Note, Tip, Important, Warning, and Caution.[^alerts]
+
+> [!WARNING]
+> The gateway rejects unauthenticated calls before they reach the order service.
+
+[^alerts]: Footnotes collect at the end of the document with back-references.
+
 ## Code Snippets
 
 ### Kotlin

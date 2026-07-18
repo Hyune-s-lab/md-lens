@@ -1,6 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { renderMarkdown } from "./render-markdown";
+import type { RenderRequest } from "./render-request";
+
+function render(source: string): string {
+  const request: RenderRequest = {
+    version: 5,
+    source,
+    baseUrl: "file:///project/docs/guide.md",
+    documentType: "markdown",
+    theme: "light",
+    profile: "compact",
+    fontFamily: "",
+    fontSize: 14,
+    maxContentWidth: 1152,
+  };
+  return renderMarkdown(request).html;
+}
 
 describe("renderMarkdown", () => {
   it("renders GitHub-flavored task lists", () => {
@@ -60,5 +76,64 @@ describe("renderMarkdown", () => {
 
     expect(result.html).toContain('<h2 id="hello-mdlens">');
     expect(result.html).toContain('<h2 id="hello-mdlens-1">');
+  });
+
+  it("renders every GitHub alert kind with its title and icon", () => {
+    const kinds: Array<[string, string, string]> = [
+      ["NOTE", "Note", "octicon-info"],
+      ["TIP", "Tip", "octicon-light-bulb"],
+      ["IMPORTANT", "Important", "octicon-report"],
+      ["WARNING", "Warning", "octicon-alert"],
+      ["CAUTION", "Caution", "octicon-stop"],
+    ];
+    for (const [marker, title, icon] of kinds) {
+      const html = render(`> [!${marker}]\n> Useful text.`);
+      expect(html).toContain(`markdown-alert-${marker.toLowerCase()}`);
+      expect(html).toContain(`>${title}</p>`);
+      expect(html).toContain(icon);
+      expect(html).toContain("Useful text.");
+      expect(html).not.toContain(`[!${marker}]`);
+      expect(html).not.toContain("<blockquote>");
+    }
+  });
+
+  it("keeps alert content that spans multiple paragraphs", () => {
+    const html = render("> [!NOTE]\n>\n> First paragraph.\n>\n> Second paragraph.");
+    expect(html).toContain("markdown-alert-note");
+    expect(html).toContain("First paragraph.");
+    expect(html).toContain("Second paragraph.");
+  });
+
+  it("leaves regular and near-miss blockquotes untouched", () => {
+    const plain = render("> Just a quote.");
+    expect(plain).toContain("<blockquote>");
+    expect(plain).not.toContain("markdown-alert");
+
+    const trailingText = render("> [!NOTE] inline text on the marker line");
+    expect(trailingText).toContain("<blockquote>");
+    expect(trailingText).not.toContain("markdown-alert");
+
+    const unknownKind = render("> [!DANGER]\n> Not a GitHub kind.");
+    expect(unknownKind).toContain("<blockquote>");
+    expect(unknownKind).not.toContain("markdown-alert");
+
+    const nested = render("> outer quote\n> > [!NOTE]\n> > nested marker");
+    expect(nested).toContain("<blockquote>");
+    expect(nested).not.toContain("markdown-alert");
+  });
+
+  it("renders footnotes with back-references", () => {
+    const html = render("Body text[^1] here.\n\n[^1]: The footnote body.");
+    expect(html).toContain("data-footnote-ref");
+    expect(html).toContain('<section class="footnotes" data-footnotes');
+    expect(html).toContain("The footnote body.");
+    expect(html).toContain("data-footnote-backref");
+    expect(html).toContain('id="footnote-label"');
+  });
+
+  it("keeps documents without footnotes byte-identical in structure", () => {
+    const html = render("Plain text with [brackets] and a caret^ but no footnotes.");
+    expect(html).not.toContain("data-footnotes");
+    expect(html).toContain("Plain text with [brackets] and a caret^ but no footnotes.");
   });
 });

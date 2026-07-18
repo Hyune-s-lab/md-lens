@@ -32,6 +32,11 @@ enum class MdLensPreviewSample(
 
             - Compact keeps familiar GitHub spacing.
             - Spacious is tuned for longer reading sessions.
+
+            > [!TIP]
+            > Alerts render as GitHub-style callouts, and footnotes collect at the end.[^1]
+
+            [^1]: With a back-reference to the text.
         """.trimIndent(),
     ),
     KOREAN(
@@ -59,6 +64,11 @@ enum class MdLensPreviewSample(
 
             - 간결은 익숙한 GitHub 간격을 유지합니다.
             - 여유는 긴 글 읽기에 맞춰 조정되어 있습니다.
+
+            > [!TIP]
+            > 알림은 GitHub 스타일 콜아웃으로 렌더링되고, 각주는 문서 끝에 모입니다.[^1]
+
+            [^1]: 본문으로 되돌아가는 링크가 붙습니다.
         """.trimIndent(),
     ),
     JAPANESE(
@@ -86,6 +96,11 @@ enum class MdLensPreviewSample(
 
             - コンパクトは馴染みのある GitHub の間隔を保ちます。
             - ゆったりは長文の読書向けに調整されています。
+
+            > [!TIP]
+            > アラートは GitHub スタイルのコールアウトとして表示され、脚注は文末に集まります。[^1]
+
+            [^1]: 本文へ戻るリンクが付きます。
         """.trimIndent(),
     ),
     CHINESE(
@@ -113,6 +128,11 @@ enum class MdLensPreviewSample(
 
             - 紧凑保持熟悉的 GitHub 间距。
             - 宽松为长时间阅读而调校。
+
+            > [!TIP]
+            > 提醒会渲染为 GitHub 风格的提示框，脚注则汇总在文档末尾。[^1]
+
+            [^1]: 并提供返回正文的链接。
         """.trimIndent(),
     ),
     CODE(

@@ -9,3 +9,6 @@ dist/
 
 # Marketing assets stay local only
 docs/assets/marketing/
+
+# Local Claude Code launch config
+.claude/launch.json

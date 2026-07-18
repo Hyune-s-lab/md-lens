@@ -19,16 +19,23 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
+import com.intellij.util.ui.JBUI
 import dev.hyunelab.mdlens.settings.MdLensSettings
 import dev.hyunelab.mdlens.settings.MdLensSettingsListener
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
+import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.Timer
 
 internal class MdLensJcefFileEditor(
     private val project: Project,
@@ -42,8 +49,14 @@ internal class MdLensJcefFileEditor(
     private val openLinkQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
     private val renderedQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
     private val errorQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+    private val container = JPanel(BorderLayout())
+    private var focusTarget: JComponent
     private var rendererReady = false
     private var pendingAnchor: String? = null
+    private var fallbackShown = false
+    private val bootstrapTimer = Timer(BOOTSTRAP_TIMEOUT_MS) {
+        fallBackToPlainText("Renderer did not become ready within ${BOOTSTRAP_TIMEOUT_MS / 1000}s")
+    }.apply { isRepeats = false }
     @Volatile
     private var disposed = false
 
@@ -59,6 +72,7 @@ internal class MdLensJcefFileEditor(
             ApplicationManager.getApplication().invokeLater {
                 if (isValid) {
                     rendererReady = true
+                    bootstrapTimer.stop()
                     render()
                 }
             }
@@ -86,6 +100,11 @@ internal class MdLensJcefFileEditor(
         }
         errorQuery.addHandler { message ->
             LOG.warn("Renderer error for ${file.path}: $message")
+            ApplicationManager.getApplication().invokeLater({
+                if (!rendererReady) {
+                    fallBackToPlainText("Renderer reported an error before becoming ready: $message")
+                }
+            }, ModalityState.any())
             JBCefJSQuery.Response(null)
         }
 
@@ -117,11 +136,14 @@ internal class MdLensJcefFileEditor(
         val viewerHtml = checkNotNull(javaClass.getResource("/mdlens/viewer.html")) {
             "Missing bundled renderer"
         }.readText()
+        container.add(browser.component, BorderLayout.CENTER)
+        focusTarget = browser.component
         browser.loadHTML(viewerHtml, pageUrl)
+        bootstrapTimer.start()
     }
 
-    override fun getComponent(): JComponent = browser.component
-    override fun getPreferredFocusedComponent(): JComponent = browser.component
+    override fun getComponent(): JComponent = container
+    override fun getPreferredFocusedComponent(): JComponent = focusTarget
     override fun getName(): String = "MdLens"
     override fun getFile(): VirtualFile = file
     override fun setState(state: FileEditorState) = Unit
@@ -133,6 +155,35 @@ internal class MdLensJcefFileEditor(
     override fun dispose() {
         disposed = true
         rendererReady = false
+        bootstrapTimer.stop()
+    }
+
+    private fun fallBackToPlainText(reason: String) {
+        if (disposed || fallbackShown || rendererReady || !isValid) {
+            return
+        }
+        fallbackShown = true
+        bootstrapTimer.stop()
+        LOG.warn("Viewer bootstrap failed for ${file.path}; showing plain text. $reason")
+        val textArea = JBTextArea(document.text).apply {
+            isEditable = false
+            lineWrap = true
+            wrapStyleWord = true
+        }
+        document.addDocumentListener(object : DocumentListener {
+            override fun documentChanged(event: DocumentEvent) {
+                textArea.text = event.document.text
+            }
+        }, this)
+        val banner = JBLabel("MdLens viewer failed to start; showing plain text. See the IDE log for details.").apply {
+            border = JBUI.Borders.empty(6, 10)
+        }
+        container.removeAll()
+        container.add(banner, BorderLayout.NORTH)
+        container.add(JBScrollPane(textArea), BorderLayout.CENTER)
+        focusTarget = textArea
+        container.revalidate()
+        container.repaint()
     }
 
     private fun connectRenderer() {
@@ -216,5 +267,6 @@ internal class MdLensJcefFileEditor(
     private companion object {
         val LOG = Logger.getInstance(MdLensJcefFileEditor::class.java)
         val MERMAID_EXTENSIONS = setOf("mermaid", "mmd")
+        const val BOOTSTRAP_TIMEOUT_MS = 10_000
     }
 }

@@ -16,6 +16,10 @@ const apacheLicense = (await readFile(resolve(root, "node_modules/dompurify/LICE
 const materialDesignLicense = (
   await readFile(resolve(root, "licenses/MaterialDesignIcons-LICENSE.txt"), "utf8")
 ).trim();
+const markedFootnotePath = "node_modules/marked-footnote";
+const markedFootnoteLicense = (
+  await readFile(resolve(root, "licenses/marked-footnote-LICENSE.txt"), "utf8")
+).trim();
 const licenseGroups = new Map();
 const packageIndex = [];
 
@@ -25,6 +29,9 @@ for (const [path, metadata] of packages) {
   let licenseText;
   if (path === materialDesignPath) {
     licenseText = `${materialDesignLicense}\n\n${apacheLicense}`;
+  } else if (path === markedFootnotePath) {
+    // The published npm package omits its license file; ship the upstream MIT text.
+    licenseText = markedFootnoteLicense;
   } else {
     const entries = await readdir(resolve(root, path));
     const licenseFile = entries.find((entry) => /^(license|licence|copying)(\.|$)/i.test(entry));

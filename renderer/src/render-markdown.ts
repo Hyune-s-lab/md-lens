@@ -84,6 +84,10 @@ const ALERT_KINDS: Record<string, AlertKind> = {
 
 const ALERT_MARKER = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:\n|$)/;
 
+// document.TEXT_NODE without relying on the global Node, which the
+// measurement harness does not expose.
+const TEXT_NODE = 3;
+
 function transformAlerts(content: DocumentFragment): void {
   for (const quote of Array.from(content.querySelectorAll("blockquote"))) {
     // GitHub only recognizes top-level alert markers, not quotes nested in
@@ -96,7 +100,7 @@ function transformAlerts(content: DocumentFragment): void {
       continue;
     }
     const first = paragraph.firstChild;
-    if (!first || first.nodeType !== Node.TEXT_NODE || !first.nodeValue) {
+    if (!first || first.nodeType !== TEXT_NODE || !first.nodeValue) {
       continue;
     }
     const match = ALERT_MARKER.exec(first.nodeValue);

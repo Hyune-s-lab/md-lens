@@ -36,7 +36,7 @@ TypeScript -> Kotlin: ready | rendered | openLink | error | loadRuntime
 | JCEF module boundary | Optional `com.intellij.modules.jcef` plugin dependency with a separate descriptor |
 | Compatibility baseline | IntelliJ Platform 2025.1 (`since-build` 251) |
 | Renderer | TypeScript 7.0.2 bundled by Vite 8.1.4 |
-| Markdown | Marked 18.0.6 |
+| Markdown | Marked 18.0.6 with marked-footnote 1.4.0, plus GitHub-style alerts in the renderer |
 | Syntax highlighting | highlight.js 11.11.1 with a curated 12-language subset, loaded lazily |
 | Architecture diagrams | Mermaid 11.16.0 with a curated offline Material Design Icons subset, loaded lazily |
 | Sanitization | DOMPurify 3.4.11 plus a restrictive Content Security Policy |
@@ -49,14 +49,14 @@ TypeScript -> Kotlin: ready | rendered | openLink | error | loadRuntime
 
 Measurements MUST be repeated for releases that materially change the renderer or host lifecycle.
 
-Measured on an Apple Silicon Mac with Java 21 and Node.js 22, at 0.4.4:
+Measured on an Apple Silicon Mac with Java 21 and Node.js 22, at 0.5.0:
 
-- Plugin distribution: 1.13 MB
-- Self-contained core renderer: 120.0 KB raw, 32.2 KB gzip
+- Plugin distribution: 1.14 MB
+- Self-contained core renderer: 126.2 KB raw, 34.9 KB gzip
 - Lazy highlight.js runtime: 57.5 KB raw, 18.5 KB gzip
 - Lazy Mermaid runtime with curated icons: 3.57 MB raw, 976.3 KB gzip
-- Core renderer module load: 38.8 ms and 4.1 MiB heap
-- 100 KiB Markdown fixture: 132.5 ms median, 164.9 ms p95, and 42.2 MiB retained heap for one rendered result
+- Core renderer module load: 48.4 ms and 4.2 MiB heap
+- 100 KiB Markdown fixture: 150.1 ms median, 174.8 ms p95, and 44.7 MiB retained heap for one rendered result
 
 Run `npm run measure:renderer` to reproduce renderer module load, render latency, and retained heap measurements.  
 Times and memory are a local baseline, not release budgets.  

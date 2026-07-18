@@ -141,11 +141,9 @@ intellijPlatform {
         changeNotes = """
             <h3>New Features</h3>
             <ul>
-              <li>Add a Sync with IDE theme option that follows the IDE light and dark appearance, now the default.</li>
-              <li>Let each highlight group pick its color from eight presets with built-in light and dark pairs.</li>
-              <li>Change the default appearance to Spacious density with the Headings highlight enabled and a gold Bold highlight.</li>
-              <li>Add a Restore defaults action and a tighter two-column settings layout.</li>
-              <li>Add settings preview tabs for English, Korean, Japanese, Chinese, code snippets, and Mermaid diagrams.</li>
+              <li>Render GitHub-style alerts: Note, Tip, Important, Warning, and Caution.</li>
+              <li>Render footnotes with back-references.</li>
+              <li>Fall back to a plain-text view with a warning banner when the viewer fails to start.</li>
             </ul>
         """.trimIndent()
 

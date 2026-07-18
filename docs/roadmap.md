@@ -2,6 +2,13 @@
 
 Released versions keep only the essentials here; full detail lives in the GitHub Release notes.
 
+## 0.5.0 — Markdown Extensions
+
+- Render GitHub-style alerts (Note, Tip, Important, Warning, Caution)
+- Render footnotes with back-references
+- Add math rendering through the shared lazy-runtime boundary, pending a bundle-size check
+- Detect viewer bootstrap failures, log them, and fall back to the plain-text viewer
+
 ## 0.4.x
 
 - Syntax highlighting, highlight groups with color presets, and an IDE-synced theme with better defaults
@@ -19,10 +26,8 @@ MdLens was originally developed as MarkdownNeat. Releases before 0.4.0 shipped u
 
 ## Later
 
-- Detect viewer bootstrap failures, log them, and fall back to the plain-text viewer.
 - Add D2 and Excalidraw through the shared optional-runtime boundary.
 - Add bundled themes beyond GitHub Light and GitHub Dark.
-- Add Markdown extensions such as footnotes, alerts, and math rendering where they remain lightweight and safe.
 - Add optional custom CSS overrides and a copyable AI usage guide.
 - Bundle a curated subset of frequently used diagram icons for offline and deterministic rendering.
 - Build a Chrome extension that replaces GitHub's built-in Mermaid rendering with the bundled Mermaid 11 runtime

@@ -7,9 +7,9 @@
         <p>MdLens is a read-only Markdown viewer for JetBrains IDEs.</p>
         <p>It renders GitHub Flavored Markdown and Mermaid diagrams offline with GitHub Light and GitHub Dark themes that follow the IDE or stay independent.</p>
         <ul>
-            <li>GitHub Flavored Markdown and Mermaid diagrams</li>
+            <li>GitHub Flavored Markdown with alerts, footnotes, syntax highlighting, and Mermaid diagrams</li>
             <li>GitHub Light and GitHub Dark themes with optional IDE sync</li>
-            <li>Compact and Spacious profiles with configurable fonts, text scaling, content width, highlight colors, and live preview</li>
+            <li>Compact and Spacious profiles with configurable font, size, content width, highlight colors, and live preview</li>
             <li>Automatic refresh with relative images and links</li>
             <li>Offline rendering with untrusted content sanitization</li>
         </ul>

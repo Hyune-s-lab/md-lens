@@ -10,8 +10,9 @@ Install **MdLens** from the [JetBrains Marketplace](https://plugins.jetbrains.co
 ## Key Features
 
 - **Themes** — GitHub Light and GitHub Dark with optional IDE sync, and more bundled themes planned
+- **Markdown extras** — GitHub alerts, footnotes with back-references, task lists, and syntax-highlighted code blocks
 - **Architecture diagrams** — Mermaid 11.16.0 in Markdown and standalone files, with more diagram DSLs planned
-- **Reading appearance** — Compact and Spacious profiles, separate body and code fonts, adjustable text scaling and content width, and live preview
+- **Reading appearance** — Compact and Spacious profiles, highlight groups with color presets, configurable font, size, and content width, and a live multilingual preview
 - **Lightweight viewing** — read-only, offline-first rendering without editing or background indexing
 
 ## Documentation

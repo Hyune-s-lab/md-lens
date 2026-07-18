@@ -8,7 +8,7 @@ Released versions keep only the essentials here; full detail lives in the GitHub
 - Render footnotes with back-references
 - Detect viewer bootstrap failures, log them, and fall back to the plain-text viewer
 
-## 0.4.x
+## 0.4.x — Highlighting, Themes, and Settings
 
 - Syntax highlighting, highlight groups with color presets, and an IDE-synced theme with better defaults
 - Settings redesign with Restore defaults and preview tabs (multilingual, Code, Mermaid)

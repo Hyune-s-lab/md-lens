@@ -9,15 +9,16 @@ Markdown or Mermaid file
     -> deep TypeScript renderer
         -> Markdown
         -> Mermaid 11.16.0 (loaded only when used)
-        -> GitHub themes
-        -> reading profiles and typography
+        -> highlight.js 11.11.1 (loaded only when used)
+        -> GitHub themes (synced with the IDE or fixed)
+        -> reading profiles, typography, and highlight colors
 ```
 
 ## Ownership
 
 Kotlin MUST own only JetBrains extension registration, file events, JCEF lifecycle, bridge transport, IDE navigation, Settings UI and persistence, and platform fallback behavior.
 
-TypeScript MUST own Markdown parsing, sanitization, rendering profiles, themes, typography, diagram engines, DOM updates, render scheduling, error isolation, and renderer diagnostics.
+TypeScript MUST own Markdown parsing, sanitization, rendering profiles, themes, typography, highlight color presets, diagram engines, DOM updates, render scheduling, error isolation, and renderer diagnostics.
 
 The bridge MUST remain small:
 
@@ -33,27 +34,29 @@ TypeScript -> Kotlin: ready | rendered | openLink | error | loadRuntime
 | Host | Kotlin 2.3.21 + IntelliJ Platform Gradle Plugin 2.18.1 |
 | IDE integration | Exclusive, dumb-aware `FileEditorProvider` with a read-only JCEF editor and plain-text fallback |
 | JCEF module boundary | Optional `com.intellij.modules.jcef` plugin dependency with a separate descriptor |
-| Compatibility baseline | IntelliJ Platform 2026.1 (`since-build` 261) |
+| Compatibility baseline | IntelliJ Platform 2025.1 (`since-build` 251) |
 | Renderer | TypeScript 7.0.2 bundled by Vite 8.1.4 |
 | Markdown | Marked 18.0.6 |
-| Architecture diagrams | Mermaid 11.16.0 with a curated offline Material Design Icons subset |
+| Syntax highlighting | highlight.js 11.11.1 with a curated 12-language subset, loaded lazily |
+| Architecture diagrams | Mermaid 11.16.0 with a curated offline Material Design Icons subset, loaded lazily |
 | Sanitization | DOMPurify 3.4.11 plus a restrictive Content Security Policy |
 | Styling | github-markdown-css 5.9.0 with GitHub Light and GitHub Dark output plus Compact and Spacious profiles |
-| Appearance settings | Application-level theme, profile, curated installed body and code fonts, 90%–180% text scaling, 768–1536 px or full available content width, and live preview under Settings > Tools > MdLens |
-| Renderer delivery | One self-contained core HTML resource plus a separate Mermaid runtime injected only when a document uses Mermaid |
+| Appearance settings | Application-level theme (Sync with IDE, Light, Dark), density, highlight groups with eight color presets, single installed font with 12–24 px size, 768–1536 px or full available content width, restore defaults, and a tabbed live preview under Settings > Tools > MdLens |
+| Renderer delivery | One self-contained core HTML resource plus separate Mermaid and highlight.js runtimes injected only when a document uses them |
 | Plugin ID | `dev.hyunelab.mdlens` |
 
 ## Lightweight Baseline
 
 Measurements MUST be repeated for releases that materially change the renderer or host lifecycle.
 
-Measured on an Apple Silicon Mac with Java 21 and Node.js 22.21.1:
+Measured on an Apple Silicon Mac with Java 21 and Node.js 22, at 0.4.4:
 
-- Plugin distribution: 1.08 MB
-- Self-contained core renderer: 115.4 KB raw, 30.8 KB gzip
-- Lazy Mermaid runtime with curated icons: 3.57 MB raw, 983.6 KB gzip
-- Core renderer module load: 47.8 ms and 4.1 MiB heap
-- 100 KiB Markdown fixture: 175.1 ms median, 186.4 ms p95, and 41.5 MiB retained heap for one rendered result
+- Plugin distribution: 1.13 MB
+- Self-contained core renderer: 120.0 KB raw, 32.2 KB gzip
+- Lazy highlight.js runtime: 57.5 KB raw, 18.5 KB gzip
+- Lazy Mermaid runtime with curated icons: 3.57 MB raw, 976.3 KB gzip
+- Core renderer module load: 38.8 ms and 4.1 MiB heap
+- 100 KiB Markdown fixture: 132.5 ms median, 164.9 ms p95, and 42.2 MiB retained heap for one rendered result
 
 Run `npm run measure:renderer` to reproduce renderer module load, render latency, and retained heap measurements.  
 Times and memory are a local baseline, not release budgets.  
@@ -70,17 +73,16 @@ They isolate MdLens's TypeScript renderer in Node.js with JSDOM and do not claim
 
 ## Appearance Contract
 
-Themes own surface, text, code, and link colors. Profiles own reading rhythm and heading hierarchy; Spacious uses a theme-aware orange heading accent so headings remain distinct from GitHub's blue links. Both profiles retain GitHub's H1 and H2 bottom dividers.
+Themes own surface, text, code, and link colors. The default Sync with IDE theme resolves to GitHub Light or GitHub Dark from the IDE appearance at render time; open viewers re-render when the IDE theme changes. Profiles own reading rhythm and heading hierarchy, and both retain GitHub's H1 and H2 bottom dividers.
 
-Font selection offers separate curated sets of installed body and code fonts. If a selected font becomes unavailable, MdLens uses the default system font. Text scaling changes document typography only; images retain their intrinsic size and Mermaid retains its diagram geometry.
+Highlight groups accent headings, bold, and inline code independently. Each group picks from eight color presets with built-in light/dark pairs; the renderer owns the hex values and falls back to the defaults (orange, gold, green) for unknown keys. The blockquote border keeps GitHub's neutral color and does not follow the heading accent.
 
-Content width is independent of the reading profile. Both profiles use the full available width by default. Users can instead apply the same configurable 768–1536 px limit to either profile, starting at the recommended 1152 px value. Content remains left-aligned.
+A single installed font applies to body and code, falling back to the system font when unavailable. Font size is stored in pixels (12–24). Images retain their intrinsic size and Mermaid retains its diagram geometry. Content width is independent of the profile: full available width by default, or a 768–1536 px limit. Content remains left-aligned.
 
-The Settings preview reuses the bundled TypeScript renderer with a fixed Markdown sample containing heading levels, inline styles, and TypeScript and YAML code blocks. A vertical splitter places the scrollable controls in the top 38% and the full-width preview in the bottom 62%. It exists only while Settings is open, does not load optional runtimes, and is disposed with the Settings UI. The renderer reserves a stable vertical-scrollbar gutter to avoid horizontal text reflow when controls change the preview height.
+The Settings preview reuses the bundled TypeScript renderer and offers sample tabs — English, 한국어, 日本語, and 中文 for typography and tables, plus Code (Kotlin, Python, SQL, JSON, YAML) and Mermaid — with the initial tab following the IDE display language. It exists only while Settings is open, loads optional runtimes only for the tabs that need them, and is disposed with the Settings UI. The renderer reserves a stable vertical-scrollbar gutter to avoid horizontal text reflow when controls change the preview height.
 
 ## Open Decisions
 
-- Syntax highlighter and language scope
 - Custom CSS isolation and resource policy
 - D2 runtime and syntax convention
 - Excalidraw read-only workflow

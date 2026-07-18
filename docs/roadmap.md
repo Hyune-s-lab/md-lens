@@ -1,10 +1,13 @@
 # Roadmap
 
-## Released
+Released versions keep only the essentials here; full detail lives in the GitHub Release notes.
 
-MdLens releases start at 0.4.0 in this repository. Per-release detail lives in the GitHub Release notes.
+## 0.4.x
 
-- **0.4.x** — Syntax highlighting, highlight groups with color presets, IDE-synced theme with better defaults, settings redesign with multilingual preview tabs, editing handoff, anchor navigation, and the 2025.1 compatibility backport
+- Syntax highlighting, highlight groups with color presets, and an IDE-synced theme with better defaults
+- Settings redesign with Restore defaults and preview tabs (multilingual, Code, Mermaid)
+- Editing handoff layouts and anchor navigation across Markdown files
+- IDE compatibility baseline lowered to 2025.1
 
 ## Earlier Releases
 

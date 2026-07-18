@@ -1,7 +1,13 @@
 # MdLens
 
+[![JetBrains Marketplace](https://img.shields.io/jetbrains/plugin/v/32940?label=marketplace)](https://plugins.jetbrains.com/plugin/32940)
+
 > A lightweight, read-only Markdown viewer for JetBrains IDEs.  
 > AI and IDE tools edit plain Markdown; MdLens renders it for reading.
+
+## Install
+
+Install **MdLens** from the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/32940), or in the IDE via `Settings → Plugins → Marketplace` and search for "MdLens".
 
 ## Key Features
 

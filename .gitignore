@@ -6,3 +6,6 @@
 build/
 node_modules/
 dist/
+
+# Marketing assets stay local only
+docs/assets/marketing/

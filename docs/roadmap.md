@@ -2,7 +2,7 @@
 
 Released versions keep only the essentials here; full detail lives in the GitHub Release notes.
 
-## 0.5.0 — Markdown Extensions
+## 0.5.x — Markdown Extensions
 
 - Render GitHub-style alerts (Note, Tip, Important, Warning, Caution)
 - Render footnotes with back-references

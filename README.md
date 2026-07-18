@@ -17,6 +17,7 @@ Install **MdLens** from the [JetBrains Marketplace](https://plugins.jetbrains.co
 
 ## Documentation
 
+- [Samples](docs/sample) — multilingual documents that exercise tables, code, alerts, footnotes, and Mermaid diagrams
 - [Roadmap](docs/roadmap.md) — implemented and planned features
 - [Architecture](docs/architecture.md) — current design and open decisions
 

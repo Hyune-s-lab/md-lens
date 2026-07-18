@@ -6,7 +6,6 @@ Released versions keep only the essentials here; full detail lives in the GitHub
 
 - Render GitHub-style alerts (Note, Tip, Important, Warning, Caution)
 - Render footnotes with back-references
-- Add math rendering through the shared lazy-runtime boundary, pending a bundle-size check
 - Detect viewer bootstrap failures, log them, and fall back to the plain-text viewer
 
 ## 0.4.x
@@ -26,6 +25,7 @@ MdLens was originally developed as MarkdownNeat. Releases before 0.4.0 shipped u
 
 ## Later
 
+- Add math rendering through the shared optional-runtime boundary once the syntax scope and bundle size are settled.
 - Add D2 and Excalidraw through the shared optional-runtime boundary.
 - Add bundled themes beyond GitHub Light and GitHub Dark.
 - Add optional custom CSS overrides and a copyable AI usage guide.

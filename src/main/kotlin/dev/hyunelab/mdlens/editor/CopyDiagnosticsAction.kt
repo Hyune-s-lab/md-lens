@@ -1,0 +1,39 @@
+package dev.hyunelab.mdlens.editor
+
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.ide.CopyPasteManager
+import java.awt.datatransfer.StringSelection
+
+class CopyDiagnosticsAction : AnAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+        val editor = FileEditorManager.getInstance(project).getSelectedEditor(file) ?: return
+        val mdLensEditor = findMdLensEditor(editor) ?: return
+        val report = mdLensEditor.buildDiagnosticReport()
+        CopyPasteManager.getInstance().setContents(StringSelection(report))
+    }
+
+    override fun update(e: AnActionEvent) {
+        val project = e.project
+        val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
+        val editor = if (project != null && file != null) {
+            FileEditorManager.getInstance(project).getSelectedEditor(file)
+        } else null
+        e.presentation.isEnabledAndVisible = findMdLensEditor(editor) != null
+    }
+
+    private fun findMdLensEditor(editor: FileEditor?): MdLensJcefFileEditor? = when (editor) {
+        is MdLensJcefFileEditor -> editor
+        is TextEditorWithPreview -> editor.previewEditor as? MdLensJcefFileEditor
+        else -> null
+    }
+}

@@ -141,9 +141,8 @@ intellijPlatform {
         changeNotes = """
             <h3>New Features</h3>
             <ul>
-              <li>Render GitHub-style alerts: Note, Tip, Important, Warning, and Caution.</li>
-              <li>Render footnotes with back-references.</li>
-              <li>Fall back to a plain-text view with a warning banner when the viewer fails to start.</li>
+              <li>Copy diagnostics from the fallback banner or the editor context menu to report rendering issues.</li>
+              <li>Debug logging for the viewer lifecycle (render, rendered, runtime load, ready state).</li>
             </ul>
         """.trimIndent()
 

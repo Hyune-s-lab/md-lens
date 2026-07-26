@@ -1,12 +1,15 @@
 package dev.hyunelab.mdlens.editor
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -14,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
@@ -22,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
@@ -32,7 +37,9 @@ import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
 import java.awt.BorderLayout
+import java.awt.datatransfer.StringSelection
 import java.beans.PropertyChangeListener
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.Timer
@@ -54,6 +61,8 @@ internal class MdLensJcefFileEditor(
     private var rendererReady = false
     private var pendingAnchor: String? = null
     private var fallbackShown = false
+    private var fallbackReason: String? = null
+    private val errorMessages = mutableListOf<String>()
     private val bootstrapTimer = Timer(BOOTSTRAP_TIMEOUT_MS) {
         fallBackToPlainText("Renderer did not become ready within ${BOOTSTRAP_TIMEOUT_MS / 1000}s")
     }.apply { isRepeats = false }
@@ -69,6 +78,7 @@ internal class MdLensJcefFileEditor(
         Disposer.register(this, errorQuery)
 
         readyQuery.addHandler {
+            LOG.debug("Renderer ready for ${file.path}")
             ApplicationManager.getApplication().invokeLater {
                 if (isValid) {
                     rendererReady = true
@@ -79,6 +89,7 @@ internal class MdLensJcefFileEditor(
             JBCefJSQuery.Response(null)
         }
         loadRuntimeQuery.addHandler { runtimeName ->
+            LOG.debug("Runtime load requested: $runtimeName for ${file.path}")
             loadRuntime(runtimeName)
             JBCefJSQuery.Response(null)
         }
@@ -91,6 +102,7 @@ internal class MdLensJcefFileEditor(
             JBCefJSQuery.Response(null)
         }
         renderedQuery.addHandler {
+            LOG.debug("Rendered callback received for ${file.path}")
             ApplicationManager.getApplication().invokeLater {
                 if (isValid) {
                     applyPendingAnchor()
@@ -100,6 +112,7 @@ internal class MdLensJcefFileEditor(
         }
         errorQuery.addHandler { message ->
             LOG.warn("Renderer error for ${file.path}: $message")
+            errorMessages.add(message)
             ApplicationManager.getApplication().invokeLater({
                 if (!rendererReady) {
                     fallBackToPlainText("Renderer reported an error before becoming ready: $message")
@@ -128,6 +141,7 @@ internal class MdLensJcefFileEditor(
         browser.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
             override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
                 if (frame.isMain && isValid) {
+                    LOG.debug("Viewer page loaded, connecting renderer for ${file.path}")
                     connectRenderer()
                 }
             }
@@ -140,6 +154,7 @@ internal class MdLensJcefFileEditor(
         focusTarget = browser.component
         browser.loadHTML(viewerHtml, pageUrl)
         bootstrapTimer.start()
+        LOG.debug("MdLens editor created for ${file.path}")
     }
 
     override fun getComponent(): JComponent = container
@@ -163,6 +178,7 @@ internal class MdLensJcefFileEditor(
             return
         }
         fallbackShown = true
+        fallbackReason = reason
         bootstrapTimer.stop()
         LOG.warn("Viewer bootstrap failed for ${file.path}; showing plain text. $reason")
         val textArea = JBTextArea(document.text).apply {
@@ -175,15 +191,49 @@ internal class MdLensJcefFileEditor(
                 textArea.text = event.document.text
             }
         }, this)
-        val banner = JBLabel("MdLens viewer failed to start; showing plain text. See the IDE log for details.").apply {
+        val banner = JPanel(BorderLayout()).apply {
             border = JBUI.Borders.empty(6, 10)
         }
+        banner.add(
+            JBLabel("MdLens viewer failed to start; showing plain text."),
+            BorderLayout.WEST,
+        )
+        banner.add(
+            JButton("Copy Diagnostics").apply {
+                addActionListener {
+                    val report = buildDiagnosticReport()
+                    CopyPasteManager.getInstance().setContents(StringSelection(report))
+                }
+            },
+            BorderLayout.EAST,
+        )
         container.removeAll()
         container.add(banner, BorderLayout.NORTH)
         container.add(JBScrollPane(textArea), BorderLayout.CENTER)
         focusTarget = textArea
         container.revalidate()
         container.repaint()
+    }
+
+    internal fun buildDiagnosticReport(): String {
+        val settings = MdLensSettings.getInstance()
+        val documentType = if (file.extension?.lowercase() in MERMAID_EXTENSIONS) "mermaid" else "markdown"
+        return dev.hyunelab.mdlens.editor.buildDiagnosticReport(
+            DiagnosticInfo(
+                filePath = file.path,
+                documentType = documentType,
+                documentLength = document.text.length,
+                rendererReady = rendererReady,
+                fallbackReason = fallbackReason,
+                errors = errorMessages.toList(),
+                consoleMessages = emptyList(),
+                settings = settings,
+                pluginVersion = pluginVersion(),
+                ideInfo = ideInfo(),
+                jcefSupported = JBCefApp.isSupported(),
+                javaVersion = System.getProperty("java.version", "unknown"),
+            ),
+        )
     }
 
     private fun connectRenderer() {
@@ -268,5 +318,13 @@ internal class MdLensJcefFileEditor(
         val LOG = Logger.getInstance(MdLensJcefFileEditor::class.java)
         val MERMAID_EXTENSIONS = setOf("mermaid", "mmd")
         const val BOOTSTRAP_TIMEOUT_MS = 10_000
+
+        private fun pluginVersion(): String =
+            PluginManagerCore.getPlugin(PluginId.getId("dev.hyunelab.mdlens"))?.version ?: "unknown"
+
+        private fun ideInfo(): String {
+            val info = ApplicationInfo.getInstance()
+            return "${info.fullApplicationName} (build ${info.build})"
+        }
     }
 }

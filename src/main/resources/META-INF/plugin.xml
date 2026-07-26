@@ -29,4 +29,13 @@
                 displayName="MdLens"
                 instance="dev.hyunelab.mdlens.settings.MdLensSettingsConfigurable"/>
     </extensions>
+
+    <actions>
+        <action id="dev.hyunelab.mdlens.CopyDiagnostics"
+                class="dev.hyunelab.mdlens.editor.CopyDiagnosticsAction"
+                text="Copy MdLens Diagnostics"
+                description="Copy diagnostic information for the current MdLens viewer">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>

@@ -1,7 +1,6 @@
 package dev.hyunelab.mdlens.editor
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -9,7 +8,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -320,7 +318,7 @@ internal class MdLensJcefFileEditor(
         const val BOOTSTRAP_TIMEOUT_MS = 10_000
 
         private fun pluginVersion(): String =
-            PluginManagerCore.getPlugin(PluginId.getId("dev.hyunelab.mdlens"))?.version ?: "unknown"
+            javaClass.getResourceAsStream("/mdlens/plugin-version.txt")?.bufferedReader()?.use { it.readText().trim() } ?: "unknown"
 
         private fun ideInfo(): String {
             val info = ApplicationInfo.getInstance()

@@ -92,12 +92,13 @@ val testHighlightRuntime by tasks.registering(Exec::class) {
 }
 
 val generatePluginVersion by tasks.registering {
+    val pluginVersion = project.version.toString()
     val outputFile = layout.buildDirectory.file("generated/pluginVersion/mdlens/plugin-version.txt")
     outputs.file(outputFile)
     doLast {
         outputFile.get().asFile.apply {
             parentFile.mkdirs()
-            writeText(project.version.toString())
+            writeText(pluginVersion)
         }
     }
 }

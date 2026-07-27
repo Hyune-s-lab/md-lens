@@ -91,8 +91,19 @@ val testHighlightRuntime by tasks.registering(Exec::class) {
     commandLine("npm", "run", "test:highlight-runtime")
 }
 
+val generatePluginVersion by tasks.registering {
+    val outputFile = layout.buildDirectory.file("generated/pluginVersion/mdlens/plugin-version.txt")
+    outputs.file(outputFile)
+    doLast {
+        outputFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText(project.version.toString())
+        }
+    }
+}
+
 val prepareRendererResources by tasks.registering(Copy::class) {
-    dependsOn(buildHighlightRuntime, buildMermaidRuntime, buildRenderer, buildRuntimeLicenses, npmInstall)
+    dependsOn(buildHighlightRuntime, buildMermaidRuntime, buildRenderer, buildRuntimeLicenses, generatePluginVersion, npmInstall)
     into(layout.buildDirectory.dir("generated/rendererResources"))
     from(layout.buildDirectory.file("generated/renderer/index.html")) {
         into("mdlens")
@@ -102,6 +113,9 @@ val prepareRendererResources by tasks.registering(Copy::class) {
         into("mdlens")
     }
     from(layout.buildDirectory.file("generated/highlight/runtime-highlight.js")) {
+        into("mdlens")
+    }
+    from(layout.buildDirectory.file("generated/pluginVersion/mdlens/plugin-version.txt")) {
         into("mdlens")
     }
     from("LICENSE") {
@@ -143,6 +157,10 @@ intellijPlatform {
             <ul>
               <li>Copy diagnostics from the fallback banner or the editor context menu to report rendering issues.</li>
               <li>Debug logging for the viewer lifecycle (render, rendered, runtime load, ready state).</li>
+            </ul>
+            <h3>Bug Fixes</h3>
+            <ul>
+              <li>Replace internal PluginManagerCore API with a build-time version resource to fix verifier compatibility.</li>
             </ul>
         """.trimIndent()
 

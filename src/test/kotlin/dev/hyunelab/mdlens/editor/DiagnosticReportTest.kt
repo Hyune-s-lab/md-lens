@@ -13,7 +13,7 @@ class DiagnosticReportTest {
         documentType: String = "markdown",
         documentLength: Int = 1234,
         rendererReady: Boolean = false,
-        fallbackReason: String? = "Renderer did not become ready within 10s",
+        fallbackReason: String? = "Renderer did not become ready within 30s",
         errors: List<String> = listOf("Renderer error for /path/to/file.md: boom"),
         settings: MdLensSettings = MdLensSettings().apply {
             updateAppearance(
@@ -30,6 +30,7 @@ class DiagnosticReportTest {
         documentType = documentType,
         documentLength = documentLength,
         rendererReady = rendererReady,
+        pageLoaded = false,
         fallbackReason = fallbackReason,
         errors = errors,
         consoleMessages = emptyList(),
@@ -52,7 +53,7 @@ class DiagnosticReportTest {
         assertTrue(report.contains("/path/to/file.md"), "must have file path")
         assertTrue(report.contains("1234 chars"), "must have document length")
         assertTrue(report.contains("not ready"), "must show renderer state")
-        assertTrue(report.contains("Renderer did not become ready within 10s"), "must show fallback reason")
+        assertTrue(report.contains("Renderer did not become ready within 30s"), "must show fallback reason")
         assertTrue(report.contains("Theme: GitHub Dark"), "must show theme")
         assertTrue(report.contains("Profile: Spacious"), "must show profile")
         assertTrue(report.contains("Inter 16px"), "must show font")

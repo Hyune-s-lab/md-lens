@@ -154,15 +154,13 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>New Features</h3>
-            <ul>
-              <li>Copy diagnostics from the fallback banner or the editor context menu to report rendering issues.</li>
-              <li>Debug logging for the viewer lifecycle (render, rendered, runtime load, ready state).</li>
-            </ul>
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Replace internal PluginManagerCore API with a build-time version resource to fix verifier compatibility.</li>
+              <li>Capture JCEF console messages and page load errors that were silently lost during viewer bootstrap failures.</li>
+              <li>Increase the bootstrap timeout from 10s to 30s to absorb delays when many Markdown files open at once.</li>
             </ul>
+            <br/>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.3">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

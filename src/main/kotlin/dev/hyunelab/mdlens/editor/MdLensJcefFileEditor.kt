@@ -31,8 +31,10 @@ import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.ui.JBUI
 import dev.hyunelab.mdlens.settings.MdLensSettings
 import dev.hyunelab.mdlens.settings.MdLensSettingsListener
+import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
+import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefLoadHandlerAdapter
 import java.awt.BorderLayout
 import java.awt.datatransfer.StringSelection
@@ -57,10 +59,12 @@ internal class MdLensJcefFileEditor(
     private val container = JPanel(BorderLayout())
     private var focusTarget: JComponent
     private var rendererReady = false
+    private var pageLoaded = false
     private var pendingAnchor: String? = null
     private var fallbackShown = false
     private var fallbackReason: String? = null
     private val errorMessages = mutableListOf<String>()
+    private val consoleMessages = mutableListOf<String>()
     private val bootstrapTimer = Timer(BOOTSTRAP_TIMEOUT_MS) {
         fallBackToPlainText("Renderer did not become ready within ${BOOTSTRAP_TIMEOUT_MS / 1000}s")
     }.apply { isRepeats = false }
@@ -136,11 +140,46 @@ internal class MdLensJcefFileEditor(
             LafManagerListener { scheduleSettingsRender() },
         )
 
+        browser.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
+            override fun onConsoleMessage(
+                browser: CefBrowser,
+                level: CefSettings.LogSeverity,
+                message: String,
+                source: String,
+                line: Int,
+            ): Boolean {
+                val entry = "[$level] $message ($source:$line)"
+                consoleMessages.add(entry)
+                if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
+                    LOG.warn("JCEF console error for ${file.path}: $entry")
+                }
+                return true
+            }
+        }, browser.cefBrowser)
+
         browser.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
             override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
                 if (frame.isMain && isValid) {
+                    pageLoaded = true
                     LOG.debug("Viewer page loaded, connecting renderer for ${file.path}")
                     connectRenderer()
+                }
+            }
+
+            override fun onLoadError(
+                browser: CefBrowser,
+                frame: CefFrame,
+                errorCode: org.cef.handler.CefLoadHandler.ErrorCode,
+                errorText: String,
+                failedUrl: String,
+            ) {
+                if (frame.isMain && isValid) {
+                    val reason = "Page load failed: $errorCode — $errorText"
+                    LOG.warn("Viewer page load error for ${file.path}: $reason")
+                    errorMessages.add(reason)
+                    ApplicationManager.getApplication().invokeLater({
+                        fallBackToPlainText(reason)
+                    }, ModalityState.any())
                 }
             }
         }, browser.cefBrowser)
@@ -222,9 +261,10 @@ internal class MdLensJcefFileEditor(
                 documentType = documentType,
                 documentLength = document.text.length,
                 rendererReady = rendererReady,
+                pageLoaded = pageLoaded,
                 fallbackReason = fallbackReason,
                 errors = errorMessages.toList(),
-                consoleMessages = emptyList(),
+                consoleMessages = consoleMessages.toList(),
                 settings = settings,
                 pluginVersion = pluginVersion(),
                 ideInfo = ideInfo(),
@@ -236,13 +276,20 @@ internal class MdLensJcefFileEditor(
 
     private fun connectRenderer() {
         val script = """
-            window.mdLens.connect({
-              ready: function() { ${readyQuery.inject("'ready'")} },
-              loadRuntime: function(name) { ${loadRuntimeQuery.inject("name")} },
-              openLink: function(href) { ${openLinkQuery.inject("href")} },
-              rendered: function() { ${renderedQuery.inject("'rendered'")} },
-              error: function(message) { ${errorQuery.inject("message")} }
-            });
+            try {
+              if (!window.mdLens) {
+                throw new Error('window.mdLens is not defined — viewer script may not have loaded');
+              }
+              window.mdLens.connect({
+                ready: function() { ${readyQuery.inject("'ready'")} },
+                loadRuntime: function(name) { ${loadRuntimeQuery.inject("name")} },
+                openLink: function(href) { ${openLinkQuery.inject("href")} },
+                rendered: function() { ${renderedQuery.inject("'rendered'")} },
+                error: function(message) { ${errorQuery.inject("message")} }
+              });
+            } catch (e) {
+              ${errorQuery.inject("e instanceof Error ? e.message : String(e)")}
+            }
         """.trimIndent()
         browser.cefBrowser.executeJavaScript(script, pageUrl, 0)
     }
@@ -315,7 +362,7 @@ internal class MdLensJcefFileEditor(
     private companion object {
         val LOG = Logger.getInstance(MdLensJcefFileEditor::class.java)
         val MERMAID_EXTENSIONS = setOf("mermaid", "mmd")
-        const val BOOTSTRAP_TIMEOUT_MS = 10_000
+        const val BOOTSTRAP_TIMEOUT_MS = 30_000
 
         private fun pluginVersion(): String =
             javaClass.getResourceAsStream("/mdlens/plugin-version.txt")?.bufferedReader()?.use { it.readText().trim() } ?: "unknown"

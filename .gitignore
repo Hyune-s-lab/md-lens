@@ -12,3 +12,4 @@ docs/assets/marketing/
 
 # Local Claude Code launch config
 .claude/launch.json
+.hermes/

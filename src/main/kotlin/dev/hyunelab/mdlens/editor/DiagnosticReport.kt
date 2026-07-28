@@ -7,6 +7,7 @@ internal data class DiagnosticInfo(
     val documentType: String,
     val documentLength: Int,
     val rendererReady: Boolean,
+    val pageLoaded: Boolean,
     val fallbackReason: String?,
     val errors: List<String>,
     val consoleMessages: List<String>,
@@ -36,6 +37,7 @@ internal fun buildDiagnosticReport(info: DiagnosticInfo): String = buildString {
         }
     }
     appendLine("**Renderer state**: $state")
+    appendLine("**Viewer page loaded**: ${if (info.pageLoaded) "yes" else "no"}")
     appendLine()
     appendLine("### Settings")
     appendLine()

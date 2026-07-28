@@ -7,6 +7,7 @@ Released versions keep only the essentials here; full detail lives in the GitHub
 - Render GitHub-style alerts (Note, Tip, Important, Warning, Caution) and footnotes with back-references
 - Detect viewer bootstrap failures, log them, and fall back to the plain-text viewer
 - Copy diagnostics from the fallback banner or the editor context menu to report rendering issues
+- Capture JCEF console messages and page load errors, and increase the bootstrap timeout to 30s
 
 ## 0.4.x — Highlighting, Themes, and Settings
 

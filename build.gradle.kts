@@ -156,11 +156,11 @@ intellijPlatform {
         changeNotes = """
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Serialize <code>loadHTML</code> calls across editor instances using a fair semaphore so that concurrent browser initialization (e.g. project restore with many Markdown files) no longer starves CEF — only one browser loads at a time, and each receives <code>onLoadEnd</code>.</li>
-              <li>Remove the page reload retry logic from 0.5.4 that amplified CEF contention by re-flooding all stalled browsers simultaneously.</li>
+              <li>Defer JCEF browser creation until the editor tab becomes visible (<code>addNotify</code>), so project restore no longer creates 40+ CEF browsers simultaneously — only the visible tab initializes a browser.</li>
+              <li>Remove the <code>Semaphore</code> serialization and page-load retry logic from 0.5.4–0.5.5 that caused secondary bottlenecks and timeout cascades.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.5">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.6">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

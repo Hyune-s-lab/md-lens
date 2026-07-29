@@ -156,12 +156,11 @@ intellijPlatform {
         changeNotes = """
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Retry stalled page loads when concurrent browser initialization prevents CEF from dispatching <code>onLoadEnd</code> (common during project restore with many Markdown files open).</li>
-              <li>Replace the EDT-based <code>javax.swing.Timer</code> with a <code>ScheduledExecutorService</code> so the bootstrap timeout is no longer vulnerable to EDT freezes.</li>
-              <li>Include page reload attempts in the diagnostic report for clearer failure triage.</li>
+              <li>Serialize <code>loadHTML</code> calls across editor instances using a fair semaphore so that concurrent browser initialization (e.g. project restore with many Markdown files) no longer starves CEF — only one browser loads at a time, and each receives <code>onLoadEnd</code>.</li>
+              <li>Remove the page reload retry logic from 0.5.4 that amplified CEF contention by re-flooding all stalled browsers simultaneously.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.4">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.5">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

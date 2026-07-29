@@ -39,6 +39,7 @@ import org.cef.handler.CefLoadHandlerAdapter
 import java.awt.BorderLayout
 import java.awt.datatransfer.StringSelection
 import java.beans.PropertyChangeListener
+import java.util.concurrent.Semaphore
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -76,10 +77,8 @@ internal class MdLensJcefFileEditor(
             Thread(r, "MdLens-Bootstrap-${file.name}").apply { isDaemon = true }
         }
     private var bootstrapTimeout: ScheduledFuture<*>? = null
-    private var pageLoadCheck: ScheduledFuture<*>? = null
     @Volatile
     private var disposed = false
-    private var pageReloadAttempts = 0
 
     init {
         Disposer.register(this, browser)
@@ -171,7 +170,7 @@ internal class MdLensJcefFileEditor(
             override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
                 if (frame.isMain && isValid) {
                     pageLoaded = true
-                    pageLoadCheck?.cancel(false)
+                    releaseLoadHtmlSlot()
                     LOG.debug("Viewer page loaded, connecting renderer for ${file.path}")
                     connectRenderer()
                 }
@@ -188,6 +187,7 @@ internal class MdLensJcefFileEditor(
                     val reason = "Page load failed: $errorCode — $errorText"
                     LOG.warn("Viewer page load error for ${file.path}: $reason")
                     errorMessages.add(reason)
+                    releaseLoadHtmlSlot()
                     ApplicationManager.getApplication().invokeLater({
                         fallBackToPlainText(reason)
                     }, ModalityState.any())
@@ -197,7 +197,7 @@ internal class MdLensJcefFileEditor(
 
         container.add(browser.component, BorderLayout.CENTER)
         focusTarget = browser.component
-        browser.loadHTML(viewerHtml, pageUrl)
+        loadViewerPage()
         scheduleBootstrapTimers()
         LOG.debug("MdLens editor created for ${file.path}")
     }
@@ -216,6 +216,7 @@ internal class MdLensJcefFileEditor(
         disposed = true
         rendererReady = false
         cancelBootstrapTimers()
+        releaseLoadHtmlSlot()
         bootstrapExecutor.shutdownNow()
     }
 
@@ -226,6 +227,7 @@ internal class MdLensJcefFileEditor(
         fallbackShown = true
         fallbackReason = reason
         cancelBootstrapTimers()
+        releaseLoadHtmlSlot()
         LOG.warn("Viewer bootstrap failed for ${file.path}; showing plain text. $reason")
         val textArea = JBTextArea(document.text).apply {
             isEditable = false
@@ -271,7 +273,6 @@ internal class MdLensJcefFileEditor(
                 documentLength = document.text.length,
                 rendererReady = rendererReady,
                 pageLoaded = pageLoaded,
-                pageReloadAttempts = pageReloadAttempts,
                 fallbackReason = fallbackReason,
                 errors = errorMessages.toList(),
                 consoleMessages = consoleMessages.toList(),
@@ -369,40 +370,49 @@ internal class MdLensJcefFileEditor(
         )
     }
 
-    private fun scheduleBootstrapTimers() {
-        // If onLoadEnd doesn't fire within PAGE_LOAD_CHECK_DELAY_MS (common when many
-        // JBCefBrowser instances compete for CEF resources on project restore), reload
-        // the viewer HTML to give CEF another chance to dispatch the load callback.
-        pageLoadCheck = bootstrapExecutor.schedule({
-            if (!pageLoaded && !disposed && !fallbackShown && isValid) {
-                pageReloadAttempts++
-                LOG.warn("Viewer page did not load within ${PAGE_LOAD_CHECK_DELAY_MS / 1000}s for ${file.path}; reload attempt $pageReloadAttempts/$MAX_PAGE_RELOAD_ATTEMPTS")
+    private fun loadViewerPage() {
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val acquired = try {
+                loadHtmlSemaphore.tryAcquire(
+                    LOAD_HTML_ACQUIRE_TIMEOUT_MS.toLong(),
+                    TimeUnit.MILLISECONDS,
+                )
+            } catch (e: InterruptedException) {
+                false
+            }
+            if (!acquired) {
+                LOG.warn("Timed out waiting for loadHTML slot for ${file.path}")
                 ApplicationManager.getApplication().invokeLater({
-                    if (!pageLoaded && !disposed && !fallbackShown && isValid) {
-                        browser.loadHTML(viewerHtml, pageUrl)
-                        // Schedule another check if we haven't exhausted retries.
-                        if (pageReloadAttempts < MAX_PAGE_RELOAD_ATTEMPTS) {
-                            pageLoadCheck = bootstrapExecutor.schedule({
-                                if (!pageLoaded && !disposed && !fallbackShown && isValid) {
-                                    pageReloadAttempts++
-                                    LOG.warn("Viewer page still not loaded for ${file.path}; reload attempt $pageReloadAttempts/$MAX_PAGE_RELOAD_ATTEMPTS")
-                                    ApplicationManager.getApplication().invokeLater({
-                                        if (!pageLoaded && !disposed && !fallbackShown && isValid) {
-                                            browser.loadHTML(viewerHtml, pageUrl)
-                                        }
-                                    }, ModalityState.any())
-                                }
-                            }, PAGE_LOAD_CHECK_DELAY_MS.toLong(), TimeUnit.MILLISECONDS)
-                        }
+                    if (!disposed && !fallbackShown && isValid) {
+                        fallBackToPlainText("Timed out waiting for browser initialization slot")
                     }
                 }, ModalityState.any())
+                return@executeOnPooledThread
             }
-        }, PAGE_LOAD_CHECK_DELAY_MS.toLong(), TimeUnit.MILLISECONDS)
+            ApplicationManager.getApplication().invokeLater({
+                if (disposed || fallbackShown || !isValid) {
+                    releaseLoadHtmlSlot()
+                    return@invokeLater
+                }
+                browser.loadHTML(viewerHtml, pageUrl)
+            }, ModalityState.any())
+        }
+    }
 
+    private var slotReleased = false
+
+    private fun releaseLoadHtmlSlot() {
+        if (!slotReleased) {
+            slotReleased = true
+            loadHtmlSemaphore.release()
+        }
+    }
+
+    private fun scheduleBootstrapTimers() {
         bootstrapTimeout = bootstrapExecutor.schedule({
             if (!disposed && !fallbackShown && !rendererReady) {
                 val reason = if (!pageLoaded) {
-                    "Viewer page did not load within ${BOOTSTRAP_TIMEOUT_MS / 1000}s (after $pageReloadAttempts reload attempts)"
+                    "Viewer page did not load within ${BOOTSTRAP_TIMEOUT_MS / 1000}s"
                 } else {
                     "Renderer did not become ready within ${BOOTSTRAP_TIMEOUT_MS / 1000}s"
                 }
@@ -414,8 +424,6 @@ internal class MdLensJcefFileEditor(
     }
 
     private fun cancelBootstrapTimers() {
-        pageLoadCheck?.cancel(false)
-        pageLoadCheck = null
         bootstrapTimeout?.cancel(false)
         bootstrapTimeout = null
     }
@@ -424,8 +432,13 @@ internal class MdLensJcefFileEditor(
         val LOG = Logger.getInstance(MdLensJcefFileEditor::class.java)
         val MERMAID_EXTENSIONS = setOf("mermaid", "mmd")
         const val BOOTSTRAP_TIMEOUT_MS = 30_000
-        const val PAGE_LOAD_CHECK_DELAY_MS = 5_000
-        const val MAX_PAGE_RELOAD_ATTEMPTS = 3
+        const val LOAD_HTML_ACQUIRE_TIMEOUT_MS = 15_000
+
+        // CEF processes all browser instances in a single subprocess. When many
+        // JBCefBrowser instances call loadHTML() within milliseconds of each other
+        // (e.g. project restore), only the first receives onLoadEnd. Serializing
+        // loadHTML lets each browser complete its page load before the next starts.
+        val loadHtmlSemaphore = Semaphore(1, true)
 
         private fun pluginVersion(): String =
             javaClass.getResourceAsStream("/mdlens/plugin-version.txt")?.bufferedReader()?.use { it.readText().trim() } ?: "unknown"

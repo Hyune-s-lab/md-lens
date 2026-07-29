@@ -39,7 +39,6 @@ import org.cef.handler.CefLoadHandlerAdapter
 import java.awt.BorderLayout
 import java.awt.datatransfer.StringSelection
 import java.beans.PropertyChangeListener
-import java.util.concurrent.Semaphore
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -54,17 +53,27 @@ internal class MdLensJcefFileEditor(
 ) : UserDataHolderBase(), FileEditor {
     private val document = requireNotNull(FileDocumentManager.getInstance().getDocument(file))
     private val pageUrl = viewerPageUrl(file)
-    private val browser = JBCefBrowser()
-    private val readyQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
-    private val loadRuntimeQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
-    private val openLinkQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
-    private val renderedQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
-    private val errorQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
-    private val container = JPanel(BorderLayout())
     private val viewerHtml = checkNotNull(javaClass.getResource("/mdlens/viewer.html")) {
         "Missing bundled renderer"
     }.readText()
-    private var focusTarget: JComponent
+
+    // Lazy-initialized browser resources — created only when the editor becomes visible.
+    @Volatile
+    private var browserInitialized = false
+    private var browser: JBCefBrowser? = null
+    private var readyQuery: JBCefJSQuery? = null
+    private var loadRuntimeQuery: JBCefJSQuery? = null
+    private var openLinkQuery: JBCefJSQuery? = null
+    private var renderedQuery: JBCefJSQuery? = null
+    private var errorQuery: JBCefJSQuery? = null
+
+    private val container = object : JPanel(BorderLayout()) {
+        override fun addNotify() {
+            super.addNotify()
+            ensureBrowserInitialized()
+        }
+    }
+    private var focusTarget: JComponent = container
     private var rendererReady = false
     private var pageLoaded = false
     private var pendingAnchor: String? = null
@@ -81,7 +90,55 @@ internal class MdLensJcefFileEditor(
     private var disposed = false
 
     init {
+        document.addDocumentListener(object : DocumentListener {
+            override fun documentChanged(event: DocumentEvent) {
+                render()
+            }
+        }, this)
+
+        ApplicationManager.getApplication().messageBus.connect(this).subscribe(
+            MdLensSettingsListener.TOPIC,
+            MdLensSettingsListener { scheduleSettingsRender() },
+        )
+
+        // The Sync with IDE theme resolves at render time, so a LaF switch must re-render.
+        ApplicationManager.getApplication().messageBus.connect(this).subscribe(
+            LafManagerListener.TOPIC,
+            LafManagerListener { scheduleSettingsRender() },
+        )
+
+        LOG.debug("MdLens editor created for ${file.path}")
+    }
+
+    /**
+     * Called when the editor's component becomes visible (added to the Swing hierarchy).
+     * Deferring JBCefBrowser creation until this point avoids creating 40+ CEF browsers
+     * simultaneously during project restore — only the visible tab initializes a browser.
+     */
+    @Synchronized
+    private fun ensureBrowserInitialized() {
+        if (browserInitialized || disposed || !isValid) {
+            return
+        }
+        browserInitialized = true
+
+        val browser = JBCefBrowser()
+        this.browser = browser
+
         Disposer.register(this, browser)
+
+        val readyQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+        val loadRuntimeQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+        val openLinkQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+        val renderedQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+        val errorQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
+
+        this.readyQuery = readyQuery
+        this.loadRuntimeQuery = loadRuntimeQuery
+        this.openLinkQuery = openLinkQuery
+        this.renderedQuery = renderedQuery
+        this.errorQuery = errorQuery
+
         Disposer.register(this, readyQuery)
         Disposer.register(this, loadRuntimeQuery)
         Disposer.register(this, openLinkQuery)
@@ -132,23 +189,6 @@ internal class MdLensJcefFileEditor(
             JBCefJSQuery.Response(null)
         }
 
-        document.addDocumentListener(object : DocumentListener {
-            override fun documentChanged(event: DocumentEvent) {
-                render()
-            }
-        }, this)
-
-        ApplicationManager.getApplication().messageBus.connect(this).subscribe(
-            MdLensSettingsListener.TOPIC,
-            MdLensSettingsListener { scheduleSettingsRender() },
-        )
-
-        // The Sync with IDE theme resolves at render time, so a LaF switch must re-render.
-        ApplicationManager.getApplication().messageBus.connect(this).subscribe(
-            LafManagerListener.TOPIC,
-            LafManagerListener { scheduleSettingsRender() },
-        )
-
         browser.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
             override fun onConsoleMessage(
                 browser: CefBrowser,
@@ -170,7 +210,6 @@ internal class MdLensJcefFileEditor(
             override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
                 if (frame.isMain && isValid) {
                     pageLoaded = true
-                    releaseLoadHtmlSlot()
                     LOG.debug("Viewer page loaded, connecting renderer for ${file.path}")
                     connectRenderer()
                 }
@@ -187,7 +226,6 @@ internal class MdLensJcefFileEditor(
                     val reason = "Page load failed: $errorCode — $errorText"
                     LOG.warn("Viewer page load error for ${file.path}: $reason")
                     errorMessages.add(reason)
-                    releaseLoadHtmlSlot()
                     ApplicationManager.getApplication().invokeLater({
                         fallBackToPlainText(reason)
                     }, ModalityState.any())
@@ -197,9 +235,9 @@ internal class MdLensJcefFileEditor(
 
         container.add(browser.component, BorderLayout.CENTER)
         focusTarget = browser.component
-        loadViewerPage()
+        browser.loadHTML(viewerHtml, pageUrl)
         scheduleBootstrapTimers()
-        LOG.debug("MdLens editor created for ${file.path}")
+        LOG.debug("Browser initialized for ${file.path}")
     }
 
     override fun getComponent(): JComponent = container
@@ -216,7 +254,6 @@ internal class MdLensJcefFileEditor(
         disposed = true
         rendererReady = false
         cancelBootstrapTimers()
-        releaseLoadHtmlSlot()
         bootstrapExecutor.shutdownNow()
     }
 
@@ -227,7 +264,6 @@ internal class MdLensJcefFileEditor(
         fallbackShown = true
         fallbackReason = reason
         cancelBootstrapTimers()
-        releaseLoadHtmlSlot()
         LOG.warn("Viewer bootstrap failed for ${file.path}; showing plain text. $reason")
         val textArea = JBTextArea(document.text).apply {
             isEditable = false
@@ -286,6 +322,12 @@ internal class MdLensJcefFileEditor(
     }
 
     private fun connectRenderer() {
+        val readyQuery = readyQuery ?: return
+        val loadRuntimeQuery = loadRuntimeQuery ?: return
+        val openLinkQuery = openLinkQuery ?: return
+        val renderedQuery = renderedQuery ?: return
+        val errorQuery = errorQuery ?: return
+        val browser = browser ?: return
         val script = """
             try {
               if (!window.mdLens) {
@@ -309,6 +351,7 @@ internal class MdLensJcefFileEditor(
         if (!rendererReady || !isValid) {
             return
         }
+        val browser = browser ?: return
         val settings = MdLensSettings.getInstance()
         val documentType = if (file.extension?.lowercase() in MERMAID_EXTENSIONS) "mermaid" else "markdown"
         val request = rendererRequestJson(document.text, pageUrl, documentType, settings)
@@ -320,7 +363,7 @@ internal class MdLensJcefFileEditor(
             val script = mdLensRuntimeScript(runtimeName)
             ApplicationManager.getApplication().invokeLater({
                 if (isValid) {
-                    browser.cefBrowser.executeJavaScript(script, pageUrl, 0)
+                    browser?.cefBrowser?.executeJavaScript(script, pageUrl, 0)
                 }
             }, ModalityState.any())
         }
@@ -330,7 +373,7 @@ internal class MdLensJcefFileEditor(
         ApplicationManager.getApplication().invokeLater({
             if (isValid) {
                 render()
-                browser.component.repaint()
+                browser?.component?.repaint()
             }
         }, ModalityState.any())
     }
@@ -363,50 +406,11 @@ internal class MdLensJcefFileEditor(
     private fun applyPendingAnchor() {
         val anchor = pendingAnchor ?: return
         pendingAnchor = null
-        browser.cefBrowser.executeJavaScript(
+        browser?.cefBrowser?.executeJavaScript(
             "document.getElementById(${anchor.toJsonString()})?.scrollIntoView();",
             pageUrl,
             0,
         )
-    }
-
-    private fun loadViewerPage() {
-        ApplicationManager.getApplication().executeOnPooledThread {
-            val acquired = try {
-                loadHtmlSemaphore.tryAcquire(
-                    LOAD_HTML_ACQUIRE_TIMEOUT_MS.toLong(),
-                    TimeUnit.MILLISECONDS,
-                )
-            } catch (e: InterruptedException) {
-                false
-            }
-            if (!acquired) {
-                LOG.warn("Timed out waiting for loadHTML slot for ${file.path}")
-                ApplicationManager.getApplication().invokeLater({
-                    if (!disposed && !fallbackShown && isValid) {
-                        fallBackToPlainText("Timed out waiting for browser initialization slot")
-                    }
-                }, ModalityState.any())
-                return@executeOnPooledThread
-            }
-            ApplicationManager.getApplication().invokeLater({
-                if (disposed || fallbackShown || !isValid) {
-                    releaseLoadHtmlSlot()
-                    return@invokeLater
-                }
-                browser.loadHTML(viewerHtml, pageUrl)
-            }, ModalityState.any())
-        }
-    }
-
-    @Volatile
-    private var slotReleased = false
-
-    private fun releaseLoadHtmlSlot() {
-        if (!slotReleased) {
-            slotReleased = true
-            loadHtmlSemaphore.release()
-        }
     }
 
     private fun scheduleBootstrapTimers() {
@@ -433,13 +437,6 @@ internal class MdLensJcefFileEditor(
         val LOG = Logger.getInstance(MdLensJcefFileEditor::class.java)
         val MERMAID_EXTENSIONS = setOf("mermaid", "mmd")
         const val BOOTSTRAP_TIMEOUT_MS = 30_000
-        const val LOAD_HTML_ACQUIRE_TIMEOUT_MS = 15_000
-
-        // CEF processes all browser instances in a single subprocess. When many
-        // JBCefBrowser instances call loadHTML() within milliseconds of each other
-        // (e.g. project restore), only the first receives onLoadEnd. Serializing
-        // loadHTML lets each browser complete its page load before the next starts.
-        val loadHtmlSemaphore = Semaphore(1, true)
 
         private fun pluginVersion(): String =
             javaClass.getResourceAsStream("/mdlens/plugin-version.txt")?.bufferedReader()?.use { it.readText().trim() } ?: "unknown"

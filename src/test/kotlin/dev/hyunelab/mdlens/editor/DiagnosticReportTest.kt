@@ -31,6 +31,7 @@ class DiagnosticReportTest {
         documentLength = documentLength,
         rendererReady = rendererReady,
         pageLoaded = false,
+        pageReloadAttempts = 0,
         fallbackReason = fallbackReason,
         errors = errors,
         consoleMessages = emptyList(),

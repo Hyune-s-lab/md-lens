@@ -156,11 +156,12 @@ intellijPlatform {
         changeNotes = """
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Capture JCEF console messages and page load errors that were silently lost during viewer bootstrap failures.</li>
-              <li>Increase the bootstrap timeout from 10s to 30s to absorb delays when many Markdown files open at once.</li>
+              <li>Retry stalled page loads when concurrent browser initialization prevents CEF from dispatching <code>onLoadEnd</code> (common during project restore with many Markdown files open).</li>
+              <li>Replace the EDT-based <code>javax.swing.Timer</code> with a <code>ScheduledExecutorService</code> so the bootstrap timeout is no longer vulnerable to EDT freezes.</li>
+              <li>Include page reload attempts in the diagnostic report for clearer failure triage.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.3">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.4">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

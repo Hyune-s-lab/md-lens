@@ -39,10 +39,13 @@ import org.cef.handler.CefLoadHandlerAdapter
 import java.awt.BorderLayout
 import java.awt.datatransfer.StringSelection
 import java.beans.PropertyChangeListener
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.Timer
 
 internal class MdLensJcefFileEditor(
     private val project: Project,
@@ -57,6 +60,9 @@ internal class MdLensJcefFileEditor(
     private val renderedQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
     private val errorQuery = JBCefJSQuery.create(browser as JBCefBrowserBase)
     private val container = JPanel(BorderLayout())
+    private val viewerHtml = checkNotNull(javaClass.getResource("/mdlens/viewer.html")) {
+        "Missing bundled renderer"
+    }.readText()
     private var focusTarget: JComponent
     private var rendererReady = false
     private var pageLoaded = false
@@ -65,11 +71,15 @@ internal class MdLensJcefFileEditor(
     private var fallbackReason: String? = null
     private val errorMessages = mutableListOf<String>()
     private val consoleMessages = mutableListOf<String>()
-    private val bootstrapTimer = Timer(BOOTSTRAP_TIMEOUT_MS) {
-        fallBackToPlainText("Renderer did not become ready within ${BOOTSTRAP_TIMEOUT_MS / 1000}s")
-    }.apply { isRepeats = false }
+    private val bootstrapExecutor: ScheduledExecutorService =
+        Executors.newSingleThreadScheduledExecutor { r ->
+            Thread(r, "MdLens-Bootstrap-${file.name}").apply { isDaemon = true }
+        }
+    private var bootstrapTimeout: ScheduledFuture<*>? = null
+    private var pageLoadCheck: ScheduledFuture<*>? = null
     @Volatile
     private var disposed = false
+    private var pageReloadAttempts = 0
 
     init {
         Disposer.register(this, browser)
@@ -84,7 +94,7 @@ internal class MdLensJcefFileEditor(
             ApplicationManager.getApplication().invokeLater {
                 if (isValid) {
                     rendererReady = true
-                    bootstrapTimer.stop()
+                    cancelBootstrapTimers()
                     render()
                 }
             }
@@ -161,6 +171,7 @@ internal class MdLensJcefFileEditor(
             override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
                 if (frame.isMain && isValid) {
                     pageLoaded = true
+                    pageLoadCheck?.cancel(false)
                     LOG.debug("Viewer page loaded, connecting renderer for ${file.path}")
                     connectRenderer()
                 }
@@ -184,13 +195,10 @@ internal class MdLensJcefFileEditor(
             }
         }, browser.cefBrowser)
 
-        val viewerHtml = checkNotNull(javaClass.getResource("/mdlens/viewer.html")) {
-            "Missing bundled renderer"
-        }.readText()
         container.add(browser.component, BorderLayout.CENTER)
         focusTarget = browser.component
         browser.loadHTML(viewerHtml, pageUrl)
-        bootstrapTimer.start()
+        scheduleBootstrapTimers()
         LOG.debug("MdLens editor created for ${file.path}")
     }
 
@@ -207,7 +215,8 @@ internal class MdLensJcefFileEditor(
     override fun dispose() {
         disposed = true
         rendererReady = false
-        bootstrapTimer.stop()
+        cancelBootstrapTimers()
+        bootstrapExecutor.shutdownNow()
     }
 
     private fun fallBackToPlainText(reason: String) {
@@ -216,7 +225,7 @@ internal class MdLensJcefFileEditor(
         }
         fallbackShown = true
         fallbackReason = reason
-        bootstrapTimer.stop()
+        cancelBootstrapTimers()
         LOG.warn("Viewer bootstrap failed for ${file.path}; showing plain text. $reason")
         val textArea = JBTextArea(document.text).apply {
             isEditable = false
@@ -262,6 +271,7 @@ internal class MdLensJcefFileEditor(
                 documentLength = document.text.length,
                 rendererReady = rendererReady,
                 pageLoaded = pageLoaded,
+                pageReloadAttempts = pageReloadAttempts,
                 fallbackReason = fallbackReason,
                 errors = errorMessages.toList(),
                 consoleMessages = consoleMessages.toList(),
@@ -359,10 +369,63 @@ internal class MdLensJcefFileEditor(
         )
     }
 
+    private fun scheduleBootstrapTimers() {
+        // If onLoadEnd doesn't fire within PAGE_LOAD_CHECK_DELAY_MS (common when many
+        // JBCefBrowser instances compete for CEF resources on project restore), reload
+        // the viewer HTML to give CEF another chance to dispatch the load callback.
+        pageLoadCheck = bootstrapExecutor.schedule({
+            if (!pageLoaded && !disposed && !fallbackShown && isValid) {
+                pageReloadAttempts++
+                LOG.warn("Viewer page did not load within ${PAGE_LOAD_CHECK_DELAY_MS / 1000}s for ${file.path}; reload attempt $pageReloadAttempts/$MAX_PAGE_RELOAD_ATTEMPTS")
+                ApplicationManager.getApplication().invokeLater({
+                    if (!pageLoaded && !disposed && !fallbackShown && isValid) {
+                        browser.loadHTML(viewerHtml, pageUrl)
+                        // Schedule another check if we haven't exhausted retries.
+                        if (pageReloadAttempts < MAX_PAGE_RELOAD_ATTEMPTS) {
+                            pageLoadCheck = bootstrapExecutor.schedule({
+                                if (!pageLoaded && !disposed && !fallbackShown && isValid) {
+                                    pageReloadAttempts++
+                                    LOG.warn("Viewer page still not loaded for ${file.path}; reload attempt $pageReloadAttempts/$MAX_PAGE_RELOAD_ATTEMPTS")
+                                    ApplicationManager.getApplication().invokeLater({
+                                        if (!pageLoaded && !disposed && !fallbackShown && isValid) {
+                                            browser.loadHTML(viewerHtml, pageUrl)
+                                        }
+                                    }, ModalityState.any())
+                                }
+                            }, PAGE_LOAD_CHECK_DELAY_MS.toLong(), TimeUnit.MILLISECONDS)
+                        }
+                    }
+                }, ModalityState.any())
+            }
+        }, PAGE_LOAD_CHECK_DELAY_MS.toLong(), TimeUnit.MILLISECONDS)
+
+        bootstrapTimeout = bootstrapExecutor.schedule({
+            if (!disposed && !fallbackShown && !rendererReady) {
+                val reason = if (!pageLoaded) {
+                    "Viewer page did not load within ${BOOTSTRAP_TIMEOUT_MS / 1000}s (after $pageReloadAttempts reload attempts)"
+                } else {
+                    "Renderer did not become ready within ${BOOTSTRAP_TIMEOUT_MS / 1000}s"
+                }
+                ApplicationManager.getApplication().invokeLater({
+                    fallBackToPlainText(reason)
+                }, ModalityState.any())
+            }
+        }, BOOTSTRAP_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+    }
+
+    private fun cancelBootstrapTimers() {
+        pageLoadCheck?.cancel(false)
+        pageLoadCheck = null
+        bootstrapTimeout?.cancel(false)
+        bootstrapTimeout = null
+    }
+
     private companion object {
         val LOG = Logger.getInstance(MdLensJcefFileEditor::class.java)
         val MERMAID_EXTENSIONS = setOf("mermaid", "mmd")
         const val BOOTSTRAP_TIMEOUT_MS = 30_000
+        const val PAGE_LOAD_CHECK_DELAY_MS = 5_000
+        const val MAX_PAGE_RELOAD_ATTEMPTS = 3
 
         private fun pluginVersion(): String =
             javaClass.getResourceAsStream("/mdlens/plugin-version.txt")?.bufferedReader()?.use { it.readText().trim() } ?: "unknown"

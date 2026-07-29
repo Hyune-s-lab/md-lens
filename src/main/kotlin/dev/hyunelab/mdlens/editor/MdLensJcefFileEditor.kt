@@ -399,6 +399,7 @@ internal class MdLensJcefFileEditor(
         }
     }
 
+    @Volatile
     private var slotReleased = false
 
     private fun releaseLoadHtmlSlot() {

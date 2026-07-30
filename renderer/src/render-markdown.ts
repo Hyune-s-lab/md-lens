@@ -17,7 +17,7 @@ export function renderMarkdown(request: RenderRequest): RenderResult {
   });
 
   const content = DOMPurify.sanitize(unsafeHtml, {
-    FORBID_TAGS: ["button", "form", "iframe", "object", "select", "style", "textarea"],
+    FORBID_TAGS: ["button", "form", "foreignObject", "iframe", "object", "script", "select", "style", "textarea"],
     RETURN_DOM_FRAGMENT: true,
     USE_PROFILES: { html: true, svg: true, svgFilters: true },
   });

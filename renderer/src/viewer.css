@@ -160,6 +160,30 @@ body {
   height: auto;
 }
 
+/* Constrain inline SVG diagrams so they don't stretch to the full container width.
+   AI-generated SVGs typically have a fixed viewBox; scale them down to a readable size. */
+.markdown-body > svg,
+.markdown-body div > svg:only-child {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 24px auto;
+}
+
+/* Inline SVG wrappers (e.g. <div style="..."><svg>...</svg></div>) from AI output */
+.markdown-body > div:has(> svg:only-child) {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.markdown-body > div:has(> svg:only-child) > svg {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+
 .md-lens-diagram-error {
   padding: 16px;
   border-left: 4px solid #cf222e;

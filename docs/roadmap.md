@@ -2,6 +2,11 @@
 
 Released versions keep only the essentials here; full detail lives in the GitHub Release notes.
 
+## 0.6.x — SVG and Math
+
+- Render inline SVG diagrams (AI-generated) directly in Markdown — DOMPurify SVG profile with style attributes
+- Render mathematical expressions via KaTeX — `$...$` inline and `$$...$$` display, with inlined fonts for offline use
+
 ## 0.5.x — Markdown Extensions
 
 - Render GitHub-style alerts (Note, Tip, Important, Warning, Caution) and footnotes with back-references

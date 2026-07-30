@@ -176,13 +176,13 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>New Features</h3>
+            <h3>Bug Fixes</h3>
             <ul>
-              <li>Render inline SVG diagrams directly in Markdown documents — AI-generated SVG with boxes, arrows, and styled elements now displays as graphics instead of escaped markup.</li>
-              <li>Render mathematical expressions using KaTeX — supports <code>$...$</code> inline and <code>$$...$$</code> display math, with fonts inlined for offline use.</li>
+              <li>Block <code>foreignObject</code> and <code>script</code> tags in sanitized SVG to prevent XSS via inline SVG.</li>
+              <li>Constrain inline SVG diagrams to the container width so they no longer stretch edge-to-edge.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.0">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.1">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

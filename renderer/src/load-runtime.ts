@@ -1,8 +1,10 @@
 import type { HighlightApi } from "./render-highlight";
+import type { KatexApi } from "./render-katex";
 import type { MermaidApi } from "./render-mermaid";
 
 interface RuntimeTypes {
   highlight: HighlightApi;
+  katex: KatexApi;
   mermaid: MermaidApi;
 }
 

@@ -42,7 +42,7 @@ describe("renderMarkdown", () => {
       version: 5,
       source: [
         '<script>alert("no")</script>',
-        '<div style="position: fixed" onclick="alert(1)">content</div>',
+        '<div style="color: red" onclick="alert(1)">content</div>',
         '<input type="text" value="editable">',
         '<a href="javascript:alert(1)">unsafe</a>',
       ].join("\n"),
@@ -55,10 +55,12 @@ describe("renderMarkdown", () => {
       maxContentWidth: 1152,
     });
 
-    expect(result.html).not.toMatch(/script|onclick|style=|javascript:/i);
+    expect(result.html).not.toMatch(/script|onclick|javascript:/i);
     expect(result.html).not.toContain('type="text"');
     expect(result.html).toContain("content");
     expect(result.html).toContain("unsafe");
+    // style attribute is now allowed for inline SVG support
+    expect(result.html).toContain("color: red");
   });
 
   it("creates stable GitHub-style anchors for headings", () => {

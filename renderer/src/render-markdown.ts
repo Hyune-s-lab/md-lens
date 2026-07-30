@@ -17,9 +17,9 @@ export function renderMarkdown(request: RenderRequest): RenderResult {
   });
 
   const content = DOMPurify.sanitize(unsafeHtml, {
-    FORBID_ATTR: ["style"],
     FORBID_TAGS: ["button", "form", "iframe", "object", "select", "style", "textarea"],
     RETURN_DOM_FRAGMENT: true,
+    USE_PROFILES: { html: true, svg: true, svgFilters: true },
   });
 
   for (const input of content.querySelectorAll("input")) {

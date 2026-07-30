@@ -69,6 +69,18 @@ val buildHighlightRuntime by tasks.registering(Exec::class) {
     commandLine("npm", "run", "build:highlight-runtime")
 }
 
+val buildKatexRuntime by tasks.registering(Exec::class) {
+    dependsOn(npmInstall)
+    inputs.files(
+        "package.json",
+        "package-lock.json",
+        "scripts/build-katex-runtime.mjs",
+        "renderer/runtime/katex.ts",
+    )
+    outputs.file(layout.buildDirectory.file("generated/katex/runtime-katex.js"))
+    commandLine("npm", "run", "build:katex-runtime")
+}
+
 val buildRuntimeLicenses by tasks.registering(Exec::class) {
     dependsOn(npmInstall)
     inputs.files("package-lock.json", "scripts/build-runtime-licenses.mjs")
@@ -91,6 +103,13 @@ val testHighlightRuntime by tasks.registering(Exec::class) {
     commandLine("npm", "run", "test:highlight-runtime")
 }
 
+val testKatexRuntime by tasks.registering(Exec::class) {
+    dependsOn(buildKatexRuntime, npmInstall)
+    inputs.files("scripts/test-katex-runtime.mjs")
+    inputs.file(layout.buildDirectory.file("generated/katex/runtime-katex.js"))
+    commandLine("npm", "run", "test:katex-runtime")
+}
+
 val generatePluginVersion by tasks.registering {
     val pluginVersion = project.version.toString()
     val outputFile = layout.buildDirectory.file("generated/pluginVersion/mdlens/plugin-version.txt")
@@ -104,7 +123,7 @@ val generatePluginVersion by tasks.registering {
 }
 
 val prepareRendererResources by tasks.registering(Copy::class) {
-    dependsOn(buildHighlightRuntime, buildMermaidRuntime, buildRenderer, buildRuntimeLicenses, generatePluginVersion, npmInstall)
+    dependsOn(buildHighlightRuntime, buildKatexRuntime, buildMermaidRuntime, buildRenderer, buildRuntimeLicenses, generatePluginVersion, npmInstall)
     into(layout.buildDirectory.dir("generated/rendererResources"))
     from(layout.buildDirectory.file("generated/renderer/index.html")) {
         into("mdlens")
@@ -114,6 +133,9 @@ val prepareRendererResources by tasks.registering(Copy::class) {
         into("mdlens")
     }
     from(layout.buildDirectory.file("generated/highlight/runtime-highlight.js")) {
+        into("mdlens")
+    }
+    from(layout.buildDirectory.file("generated/katex/runtime-katex.js")) {
         into("mdlens")
     }
     from(layout.buildDirectory.file("generated/pluginVersion/mdlens/plugin-version.txt")) {
@@ -145,7 +167,7 @@ tasks.processResources {
 }
 
 tasks.check {
-    dependsOn(testHighlightRuntime, testMermaidRuntime, testRenderer, typecheckRenderer)
+    dependsOn(testHighlightRuntime, testKatexRuntime, testMermaidRuntime, testRenderer, typecheckRenderer)
 }
 
 intellijPlatform {
@@ -154,13 +176,13 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>Bug Fixes</h3>
+            <h3>New Features</h3>
             <ul>
-              <li>Defer JCEF browser creation until the editor tab becomes visible (<code>addNotify</code>), so project restore no longer creates 40+ CEF browsers simultaneously — only the visible tab initializes a browser.</li>
-              <li>Remove the <code>Semaphore</code> serialization and page-load retry logic from 0.5.4–0.5.5 that caused secondary bottlenecks and timeout cascades.</li>
+              <li>Render inline SVG diagrams directly in Markdown documents — AI-generated SVG with boxes, arrows, and styled elements now displays as graphics instead of escaped markup.</li>
+              <li>Render mathematical expressions using KaTeX — supports <code>$...$</code> inline and <code>$$...$$</code> display math, with fonts inlined for offline use.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.5.6">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.0">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

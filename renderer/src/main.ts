@@ -8,6 +8,7 @@ import { applyAppearance } from "./apply-appearance";
 import { loadRuntime, runtimeFailed, runtimeReady } from "./load-runtime";
 import { renderDocument } from "./render-document";
 import { renderCodeHighlights } from "./render-highlight";
+import { renderMath } from "./render-katex";
 import { renderMermaidDiagrams } from "./render-mermaid";
 import type { RenderRequest } from "./render-request";
 
@@ -87,6 +88,11 @@ async function renderRequest(request: RenderRequest, generation: number): Promis
       viewer,
       request.theme,
       () => loadRuntime("mermaid", requestRuntimeFromHost),
+      (message) => host?.error(message),
+    );
+    await renderMath(
+      viewer,
+      () => loadRuntime("katex", requestRuntimeFromHost),
       (message) => host?.error(message),
     );
     await renderCodeHighlights(

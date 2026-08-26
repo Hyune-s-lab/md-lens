@@ -178,11 +178,10 @@ intellijPlatform {
         changeNotes = """
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Block <code>foreignObject</code> and <code>script</code> tags in sanitized SVG to prevent XSS via inline SVG.</li>
-              <li>Constrain inline SVG diagrams to the container width so they no longer stretch edge-to-edge.</li>
+              <li>Prevent currency symbols (e.g. <code>$49</code>, <code>$5.00</code>) from being consumed as KaTeX math delimiters — only content with math indicators is rendered as math.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.1">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.2">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

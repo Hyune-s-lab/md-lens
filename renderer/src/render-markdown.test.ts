@@ -138,4 +138,33 @@ describe("renderMarkdown", () => {
     expect(html).not.toContain("data-footnotes");
     expect(html).toContain("Plain text with [brackets] and a caret^ but no footnotes.");
   });
+
+  it("strips YAML frontmatter before rendering", () => {
+    const result = renderMarkdown({
+      version: 5,
+      source: [
+        "---",
+        "name: test-skill",
+        "description: >",
+        "  Test description line 1.",
+        "  Test description line 2.",
+        "---",
+        "# Heading",
+        "Body text.",
+      ].join("\n"),
+      baseUrl: "file:///project/test.md",
+      documentType: "markdown",
+      theme: "dark",
+      profile: "compact",
+      fontFamily: "",
+      fontSize: 14,
+      maxContentWidth: 1152,
+    });
+
+    expect(result.html).not.toContain("name:");
+    expect(result.html).not.toContain("description:");
+    expect(result.html).not.toContain("test-skill");
+    expect(result.html).toContain("Heading");
+    expect(result.html).toContain("Body text.");
+  });
 });

@@ -10,8 +10,15 @@ export interface RenderResult {
 
 marked.use(markedFootnote());
 
+
+function stripFrontmatter(source: string): string {
+  const match = source.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  return match ? source.slice(match[0].length) : source;
+}
+
 export function renderMarkdown(request: RenderRequest): RenderResult {
-  const unsafeHtml = marked.parse(request.source, {
+  const source = stripFrontmatter(request.source);
+  const unsafeHtml = marked.parse(source, {
     async: false,
     gfm: true,
   });

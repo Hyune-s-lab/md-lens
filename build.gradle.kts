@@ -178,10 +178,10 @@ intellijPlatform {
         changeNotes = """
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Prevent currency symbols (e.g. <code>$49</code>, <code>$5.00</code>) from being consumed as KaTeX math delimiters — content with spaces or pure numbers is not treated as math.</li>
+              <li>Strip YAML frontmatter (<code>---&hellip;---</code>) from rendered output instead of displaying it as plain text.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.3">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.4">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

@@ -124,4 +124,15 @@ describe("renderMath", () => {
     expect(root.querySelector(".katex-mock")).toBeNull();
     expect(root.textContent).toContain("$49");
   });
+
+  it("does not treat currency with surrounding text as math", async () => {
+    const root = document.createElement("div");
+    root.textContent = "단일 c6g.large 약 $49/월, 클러스터3노드약$147/월";
+    const errors: string[] = [];
+    await renderMath(root, async () => createMockKatex(), (m) => errors.push(m));
+    expect(errors).toEqual([]);
+    expect(root.querySelector(".katex-mock")).toBeNull();
+    expect(root.textContent).toContain("$49");
+    expect(root.textContent).toContain("$147");
+  });
 });

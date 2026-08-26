@@ -21,6 +21,10 @@ function isLikelyInlineMath(content: string): boolean {
   if (trimmed.length === 0) {
     return false;
   }
+  // GitHub does not treat $...$ as math when content has spaces
+  if (trimmed.includes(" ")) {
+      return false;
+  }
   // Pure numbers (e.g. "49", "5.00") are currency, not math
   if (/^\d+([.,]\d+)*$/.test(trimmed)) {
     return false;
@@ -122,19 +126,27 @@ function replaceMathInTextNode(textNode: Text, katex: KatexApi): void {
     }
 
     // Check for inline math $...$
+    // GitHub math requires no space right after opening $ and no space right before closing $.
     const inlineStart = remaining.indexOf("$");
     if (inlineStart !== -1) {
-      const searchFrom = inlineStart + 1;
-      const inlineEnd = remaining.indexOf("$", searchFrom);
-      if (inlineEnd !== -1 && inlineEnd > inlineStart + 0) {
-        const inlineContent = remaining.slice(inlineStart + 1, inlineEnd);
-        if (!inlineContent.startsWith("$") && isLikelyInlineMath(inlineContent)) {
-          if (inlineStart > 0) {
-            fragments.push(document.createTextNode(remaining.slice(0, inlineStart)));
+      const afterDollar = inlineStart + 1;
+      // Opening $ must be followed by a non-space character
+      if (afterDollar < remaining.length && remaining[afterDollar] !== " " && remaining[afterDollar] !== "$") {
+        const searchFrom = afterDollar;
+        const inlineEnd = remaining.indexOf("$", searchFrom);
+        if (inlineEnd !== -1 && inlineEnd > afterDollar) {
+          // Closing $ must not be preceded by a space
+          if (remaining[inlineEnd - 1] !== " ") {
+            const inlineContent = remaining.slice(afterDollar, inlineEnd);
+            if (!inlineContent.startsWith("$") && isLikelyInlineMath(inlineContent)) {
+              if (inlineStart > 0) {
+                fragments.push(document.createTextNode(remaining.slice(0, inlineStart)));
+              }
+              fragments.push({ type: "inline", content: inlineContent.trim() });
+              pos += inlineEnd + 1;
+              continue;
+            }
           }
-          fragments.push({ type: "inline", content: inlineContent.trim() });
-          pos += inlineEnd + 1;
-          continue;
         }
       }
     }

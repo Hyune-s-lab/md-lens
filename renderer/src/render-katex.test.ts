@@ -80,4 +80,48 @@ describe("renderMath", () => {
     expect(mocks[0]?.getAttribute("data-tex")).toBe("a");
     expect(mocks[1]?.getAttribute("data-tex")).toBe("b");
   });
+
+  it("does not treat currency $49 as math", async () => {
+    const root = document.createElement("div");
+    root.textContent = "Costs about $49 per month and $147 per quarter.";
+    const errors: string[] = [];
+    await renderMath(root, async () => createMockKatex(), (m) => errors.push(m));
+    expect(errors).toEqual([]);
+    expect(root.querySelector(".katex-mock")).toBeNull();
+    expect(root.textContent).toContain("$49");
+    expect(root.textContent).toContain("$147");
+  });
+
+  it("does not treat $5.00 as math", async () => {
+    const root = document.createElement("div");
+    root.textContent = "Price: $5.00 and $10.99";
+    const errors: string[] = [];
+    await renderMath(root, async () => createMockKatex(), (m) => errors.push(m));
+    expect(errors).toEqual([]);
+    expect(root.querySelector(".katex-mock")).toBeNull();
+    expect(root.textContent).toContain("$5.00");
+    expect(root.textContent).toContain("$10.99");
+  });
+
+  it("renders math with LaTeX commands but not pure numbers", async () => {
+    const root = document.createElement("div");
+    root.textContent = "Value is $\\frac{a}{b}$ and cost is $50";
+    const errors: string[] = [];
+    await renderMath(root, async () => createMockKatex(), (m) => errors.push(m));
+    expect(errors).toEqual([]);
+    const mocks = root.querySelectorAll(".katex-mock");
+    expect(mocks.length).toBe(1);
+    expect(mocks[0]?.getAttribute("data-tex")).toBe("\\frac{a}{b}");
+    expect(root.textContent).toContain("$50");
+  });
+
+  it("preserves unmatched $ as literal text", async () => {
+    const root = document.createElement("div");
+    root.textContent = "Price is $49 only (no closing dollar)";
+    const errors: string[] = [];
+    await renderMath(root, async () => createMockKatex(), (m) => errors.push(m));
+    expect(errors).toEqual([]);
+    expect(root.querySelector(".katex-mock")).toBeNull();
+    expect(root.textContent).toContain("$49");
+  });
 });

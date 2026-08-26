@@ -5,9 +5,33 @@ export interface KatexApi {
 export type KatexLoader = () => Promise<KatexApi>;
 export type KatexErrorReporter = (message: string) => void;
 
-// Matches $$...$$ (display) and $...$ (inline), skipping code spans and code blocks.
-const DISPLAY_MATH_RE = /\$\$([\s\S]+?)\$\$/g;
-const INLINE_MATH_RE = /\$([^\n$]+?)\$/g;
+// Characters that indicate the content between $...$ is likely a math expression
+// rather than a currency value or plain text.
+const MATH_INDICATOR_RE = /[\\^_{}\[\]|=+\-*/()<>]|\\[a-zA-Z]/;
+
+// Matches display math $$...$$ where content is non-empty and contains math indicators.
+function isLikelyDisplayMath(content: string): boolean {
+  return content.trim().length > 0;
+}
+
+// Matches inline math $...$ where content looks like a math expression.
+// Currency like $49 or $5.00 should NOT be treated as math.
+function isLikelyInlineMath(content: string): boolean {
+  const trimmed = content.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+  // Pure numbers (e.g. "49", "5.00") are currency, not math
+  if (/^\d+([.,]\d+)*$/.test(trimmed)) {
+    return false;
+  }
+  // Contains a math indicator character
+  if (MATH_INDICATOR_RE.test(trimmed)) {
+      return true;
+  }
+  // Single letters like "a", "x", "n" are math variables
+  return /^[a-zA-Z]$/.test(trimmed);
+}
 
 export async function renderMath(
   root: HTMLElement,
@@ -74,8 +98,7 @@ function replaceMathInTextNode(textNode: Text, katex: KatexApi): void {
     return;
   }
 
-  // Tokenize: find $$...$$ and $...$ in order, replacing with rendered HTML.
-  const fragments: Node[] = [];
+  const fragments: (Node | { type: "display"; content: string } | { type: "inline"; content: string })[] = [];
   let pos = 0;
 
   while (pos < text.length) {
@@ -86,48 +109,30 @@ function replaceMathInTextNode(textNode: Text, katex: KatexApi): void {
     if (displayStart !== -1) {
       const displayEnd = remaining.indexOf("$$", displayStart + 2);
       if (displayEnd !== -1) {
-        // Text before the match
-        if (displayStart > 0) {
-          fragments.push(document.createTextNode(remaining.slice(0, displayStart)));
+        const content = remaining.slice(displayStart + 2, displayEnd);
+        if (isLikelyDisplayMath(content)) {
+          if (displayStart > 0) {
+            fragments.push(document.createTextNode(remaining.slice(0, displayStart)));
+          }
+          fragments.push({ type: "display", content: content.trim() });
+          pos += displayEnd + 2;
+          continue;
         }
-        const content = remaining.slice(displayStart + 2, displayEnd).trim();
-        const html = katex.renderToString(content, {
-          displayMode: true,
-          throwOnError: false,
-          output: "html",
-        });
-        const wrapper = document.createElement("span");
-        wrapper.className = "md-lens-math md-lens-math-display";
-        wrapper.innerHTML = html;
-        fragments.push(wrapper);
-        pos += displayEnd + 2;
-        continue;
       }
     }
 
     // Check for inline math $...$
     const inlineStart = remaining.indexOf("$");
     if (inlineStart !== -1) {
-      // Find closing $ (not $$)
-      let searchFrom = inlineStart + 1;
+      const searchFrom = inlineStart + 1;
       const inlineEnd = remaining.indexOf("$", searchFrom);
       if (inlineEnd !== -1 && inlineEnd > inlineStart + 0) {
         const inlineContent = remaining.slice(inlineStart + 1, inlineEnd);
-        // Make sure it's not $$ (already handled above)
-        if (inlineContent.length > 0 && !inlineContent.startsWith("$")) {
-          // Text before the match
+        if (!inlineContent.startsWith("$") && isLikelyInlineMath(inlineContent)) {
           if (inlineStart > 0) {
             fragments.push(document.createTextNode(remaining.slice(0, inlineStart)));
           }
-          const html = katex.renderToString(inlineContent.trim(), {
-            displayMode: false,
-            throwOnError: false,
-            output: "html",
-          });
-          const wrapper = document.createElement("span");
-          wrapper.className = "md-lens-math md-lens-math-inline";
-          wrapper.innerHTML = html;
-          fragments.push(wrapper);
+          fragments.push({ type: "inline", content: inlineContent.trim() });
           pos += inlineEnd + 1;
           continue;
         }
@@ -147,8 +152,23 @@ function replaceMathInTextNode(textNode: Text, katex: KatexApi): void {
   if (parent === null) {
     return;
   }
+
   for (const frag of fragments) {
-    parent.insertBefore(frag, textNode);
+    if (frag instanceof Node) {
+      parent.insertBefore(frag, textNode);
+    } else {
+      const html = katex.renderToString(frag.content, {
+        displayMode: frag.type === "display",
+        throwOnError: false,
+        output: "html",
+      });
+      const wrapper = document.createElement("span");
+      wrapper.className = frag.type === "display"
+        ? "md-lens-math md-lens-math-display"
+        : "md-lens-math md-lens-math-inline";
+      wrapper.innerHTML = html;
+      parent.insertBefore(wrapper, textNode);
+    }
   }
   parent.removeChild(textNode);
 }

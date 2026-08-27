@@ -178,10 +178,10 @@ intellijPlatform {
         changeNotes = """
             <h3>Bug Fixes</h3>
             <ul>
-              <li>Strip YAML frontmatter (<code>---&hellip;---</code>) from rendered output instead of displaying it as plain text.</li>
+              <li>Fix KaTeX font loading blocked by CSP — allow <code>font-src 'self' data:</code> for inlined woff2 fonts.</li>
             </ul>
             <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.4">GitHub release notes</a>.</p>
+            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.5">GitHub release notes</a>.</p>
         """.trimIndent()
 
         ideaVersion {

@@ -21,13 +21,13 @@
     "typecheck:renderer": "tsc --noEmit"
   },
   "dependencies": {
-    "dompurify": "3.4.11",
+    "dompurify": "3.4.14",
     "github-markdown-css": "5.9.0",
     "highlight.js": "11.11.1",
     "katex": "^0.18.1",
     "marked": "18.0.6",
     "marked-footnote": "1.4.0",
-    "mermaid": "11.16.0"
+    "mermaid": "11.17.2"
   },
   "devDependencies": {
     "@iconify-json/mdi": "1.2.3",

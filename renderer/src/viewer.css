@@ -125,6 +125,26 @@ body {
   background: transparent;
 }
 
+/* The bundled GitHub highlight themes leave these common grammar scopes
+   uncolored. Keep the mapping language-neutral so every grammar benefits. */
+:root[data-theme="light"] .markdown-body .hljs-property,
+:root[data-theme="light"] .markdown-body .hljs-params {
+  color: #0969da;
+}
+
+:root[data-theme="dark"] .markdown-body .hljs-property,
+:root[data-theme="dark"] .markdown-body .hljs-params {
+  color: #79c0ff;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-punctuation {
+  color: #59636e;
+}
+
+:root[data-theme="dark"] .markdown-body .hljs-punctuation {
+  color: #9198a1;
+}
+
 .markdown-body .markdown-alert-title .octicon {
   margin-right: 8px;
 }

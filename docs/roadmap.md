@@ -2,6 +2,11 @@
 
 Released versions keep only the essentials here; full detail lives in the GitHub Release notes.
 
+## 0.7.x — Code Highlighting
+
+- Expand offline syntax highlighting to 45 languages with common fence aliases, including PostgreSQL and other SQL dialects
+- Improve function-call, property, parameter, and punctuation colors across light and dark themes
+
 ## 0.6.x — SVG and Math
 
 - Render inline SVG diagrams (AI-generated) directly in Markdown — DOMPurify SVG profile with style attributes
@@ -32,7 +37,6 @@ MdLens was originally developed as MarkdownNeat. Releases before 0.4.0 shipped u
 
 ## Later
 
-- Add math rendering through the shared optional-runtime boundary once the syntax scope and bundle size are settled.
 - Add D2 and Excalidraw through the shared optional-runtime boundary.
 - Add bundled themes beyond GitHub Light and GitHub Dark.
 - Add optional custom CSS overrides and a copyable AI usage guide.

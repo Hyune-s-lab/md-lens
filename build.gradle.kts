@@ -176,12 +176,15 @@ intellijPlatform {
         name = "MdLens"
         version = project.version.toString()
         changeNotes = """
-            <h3>Bug Fixes</h3>
+            <h3>New Features</h3>
             <ul>
-              <li>Fix KaTeX font loading blocked by CSP — allow <code>font-src 'self' data:</code> for inlined woff2 fonts.</li>
+              <li>Expand offline syntax highlighting to 45 languages with broader SQL dialect aliases.</li>
+              <li>Improve code readability with function-call and additional token-scope colors.</li>
             </ul>
-            <br/>
-            <p>See the <a href="https://github.com/Hyune-s-lab/md-lens/releases/tag/v0.6.5">GitHub release notes</a>.</p>
+            <h3>Dependency Upgrades</h3>
+            <ul>
+              <li>Upgrade DOMPurify and Mermaid to patched releases.</li>
+            </ul>
         """.trimIndent()
 
         ideaVersion {

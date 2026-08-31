@@ -1,16 +1,13 @@
-import hljs from "highlight.js/lib/core";
-import bash from "highlight.js/lib/languages/bash";
+import hljs from "highlight.js/lib/common";
+import dart from "highlight.js/lib/languages/dart";
 import dockerfile from "highlight.js/lib/languages/dockerfile";
-import java from "highlight.js/lib/languages/java";
-import javascript from "highlight.js/lib/languages/javascript";
-import json from "highlight.js/lib/languages/json";
-import kotlin from "highlight.js/lib/languages/kotlin";
-import python from "highlight.js/lib/languages/python";
-import shell from "highlight.js/lib/languages/shell";
-import sql from "highlight.js/lib/languages/sql";
-import typescript from "highlight.js/lib/languages/typescript";
-import xml from "highlight.js/lib/languages/xml";
-import yaml from "highlight.js/lib/languages/yaml";
+import groovy from "highlight.js/lib/languages/groovy";
+import nginx from "highlight.js/lib/languages/nginx";
+import nix from "highlight.js/lib/languages/nix";
+import pgsql from "highlight.js/lib/languages/pgsql";
+import powershell from "highlight.js/lib/languages/powershell";
+import protobuf from "highlight.js/lib/languages/protobuf";
+import scala from "highlight.js/lib/languages/scala";
 
 declare global {
   interface Window {
@@ -18,18 +15,18 @@ declare global {
   }
 }
 
-hljs.registerLanguage("bash", bash);
+hljs.registerLanguage("dart", dart);
 hljs.registerLanguage("dockerfile", dockerfile);
-hljs.registerLanguage("java", java);
-hljs.registerLanguage("javascript", javascript);
-hljs.registerLanguage("json", json);
-hljs.registerLanguage("kotlin", kotlin);
-hljs.registerLanguage("python", python);
-hljs.registerLanguage("shell", shell);
-hljs.registerLanguage("sql", sql);
-hljs.registerLanguage("typescript", typescript);
-hljs.registerLanguage("xml", xml);
-hljs.registerLanguage("yaml", yaml);
+hljs.registerLanguage("groovy", groovy);
+hljs.registerLanguage("nginx", nginx);
+hljs.registerLanguage("nix", nix);
+hljs.registerLanguage("pgsql", pgsql);
+hljs.registerLanguage("powershell", powershell);
+hljs.registerLanguage("protobuf", protobuf);
+hljs.registerLanguage("scala", scala);
+
+hljs.registerAliases("psql", { languageName: "pgsql" });
+hljs.registerAliases(["mysql", "mariadb", "plsql", "sqlite"], { languageName: "sql" });
 
 window.mdLensRuntimes = window.mdLensRuntimes ?? {};
 window.mdLensRuntimes.highlight = hljs;

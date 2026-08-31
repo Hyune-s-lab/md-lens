@@ -60,6 +60,14 @@ describe("Spacious viewer styles", () => {
     expect(getComputedStyle(codeBlock).borderColor).toBe("rgb(209, 217, 224)");
   });
 
+  it("adds readable colors for token scopes omitted by the GitHub highlight theme", () => {
+    expect(viewerStyles).toContain(".hljs-property");
+    expect(viewerStyles).toContain(".hljs-params");
+    expect(viewerStyles).toContain(".hljs-punctuation");
+    expect(viewerStyles).toContain(':root[data-theme="light"]');
+    expect(viewerStyles).toContain(':root[data-theme="dark"]');
+  });
+
   it("keeps GitHub underlines on spacious H1 and H2 headings", () => {
     document.documentElement.dataset.profile = "spacious";
     document.head.append(styleElement(lightTheme), styleElement(viewerStyles));

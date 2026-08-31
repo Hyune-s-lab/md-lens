@@ -20,6 +20,14 @@ const markedFootnotePath = "node_modules/marked-footnote";
 const markedFootnoteLicense = (
   await readFile(resolve(root, "licenses/marked-footnote-LICENSE.txt"), "utf8")
 ).trim();
+const fastdomPath = "node_modules/fastdom";
+const fastdomLicense = (
+  await readFile(resolve(root, "licenses/fastdom-LICENSE.txt"), "utf8")
+).trim();
+const strictdomPath = "node_modules/strictdom";
+const strictdomLicense = (
+  await readFile(resolve(root, "licenses/strictdom-LICENSE.txt"), "utf8")
+).trim();
 const licenseGroups = new Map();
 const packageIndex = [];
 
@@ -32,6 +40,12 @@ for (const [path, metadata] of packages) {
   } else if (path === markedFootnotePath) {
     // The published npm package omits its license file; ship the upstream MIT text.
     licenseText = markedFootnoteLicense;
+  } else if (path === fastdomPath) {
+    // The published npm package declares MIT but omits its license file.
+    licenseText = fastdomLicense;
+  } else if (path === strictdomPath) {
+    // The published npm package declares MIT but omits its license file.
+    licenseText = strictdomLicense;
   } else {
     const entries = await readdir(resolve(root, path));
     const licenseFile = entries.find((entry) => /^(license|licence|copying)(\.|$)/i.test(entry));
